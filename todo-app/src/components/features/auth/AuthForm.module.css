@@ -1,0 +1,32 @@
+.loginFormContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    justify-content: center;
+    padding: 2rem;
+    gap: 1.5rem;
+    width: 100%;
+}
+
+.loginFormHeader {
+    font-size: 2.25rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #212427;
+}
+
+.loginForm {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+    max-width: 400px;
+    /* align-items: start; */
+}
+
+.loginFormFooter {
+    margin-top: 1rem;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #6b7280;
+}

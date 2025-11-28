@@ -1,0 +1,16 @@
+.authButtonWrapper {
+    display: flex;
+    justify-content: start;
+    margin-top: 1rem;
+}
+
+.authButton {
+    color: #F8F9FB;
+    font-weight: 500;
+    font-size: 1rem;
+    background-color: #FF9090;
+    border-radius: 8px;
+    padding: 0.75rem 2rem;
+    border: none;
+    cursor: pointer;
+}

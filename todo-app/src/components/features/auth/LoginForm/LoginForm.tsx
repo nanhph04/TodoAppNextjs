@@ -1,0 +1,68 @@
+'use client';
+import Link from 'next/link';
+import style from '../AuthForm.module.css';
+import { MdEmail } from "react-icons/md";
+import { RiLockPasswordFill } from "react-icons/ri";
+import InputWithIcon from '@/components/ui/InputIcon/InputIcon';
+import SocialLoginRow from '@/components/ui/SocialLink/SocialLink';
+import LoginButton from '@/components/ui/AuthButton/AuthButton';
+import { useState } from 'react';
+import { authService } from '@/services/auth.server';
+import { useAuth } from '@/context/AuthContext';
+export default function LoginForm() {
+    const { login } = useAuth();
+    const [form, setForm] = useState({
+        email: '',
+        password: ''
+    });
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setForm({ ...form, [e.target.name]: e.target.value });
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
+        if (!form.email || !form.password) {
+            setError('Vui lòng nhập email và mật khẩu');
+            return;
+        }
+        setLoading(true);
+        try {
+            const res = await authService.login({
+                email: form.email,
+                password: form.password
+            });
+            const { accessToken, user } = res.data;
+            if (accessToken && user) {
+                login(accessToken, user);
+            } else {
+                setError('Đăng nhập thất bại, vui lòng thử lại');
+            }
+        } catch (err: any) {
+            setError(err?.response?.data?.message || 'Đăng nhập thất bại');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <section className={style.loginFormContainer}>
+            <header className={style.loginFormHeader}>
+                <h2>Sign In</h2>
+            </header>
+            <form className={style.loginForm} onSubmit={handleSubmit}>
+                <InputWithIcon icon={<MdEmail />} type="email" placeholder="Enter your email" name="email" value={form.email} onChange={handleChange} />
+                <InputWithIcon icon={<RiLockPasswordFill />} type="password" placeholder="Enter your password" name="password" value={form.password} onChange={handleChange} />
+                {error && <div style={{ color: 'red', fontSize: '0.95rem', marginBottom: '0.5rem' }}>{error}</div>}
+                <LoginButton label={loading ? 'Đang đăng nhập...' : 'Login'} />
+            </form>
+            <footer className={style.loginFormFooter}>
+                <SocialLoginRow text="Or, Login with" />
+                <span>Don't have an account? <Link href="/register" style={{ color: '#008BD9', fontSize: '1rem', fontWeight: '500' }}>Create one</Link></span>
+            </footer>
+        </section>
+    );
+}

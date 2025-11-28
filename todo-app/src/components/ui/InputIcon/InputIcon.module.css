@@ -1,0 +1,15 @@
+.inputIcon {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 0.5rem;
+}
+
+.inputIcon input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 1rem;
+}
