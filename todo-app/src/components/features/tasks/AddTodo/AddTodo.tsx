@@ -2,6 +2,7 @@
 import React from "react";
 import "./AddTodo.css";
 import { useTodoForm } from "@/hooks/useTodoForm";
+import { useAuth } from "@/context/AuthContext";
 import { addTodo as addTodoService } from "@/services/todo.service";
 
 interface AddTodoProps {
@@ -17,6 +18,7 @@ export default function AddTodo({ onAdded }: AddTodoProps) {
         handleChange,
         resetForm,
     } = useTodoForm();
+    const { user } = useAuth();
 
     const handleAddTodo = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -24,7 +26,21 @@ export default function AddTodo({ onAdded }: AddTodoProps) {
         setLoading(true);
         setError(null);
         try {
-            await addTodoService(form);
+            if (!user) {
+                // Chỉ lưu vào localStorage nếu chưa đăng nhập
+                const localData = localStorage.getItem('guest_todos');
+                const todos = localData ? JSON.parse(localData) : [];
+                let newId = "";
+                if (typeof crypto !== "undefined" && crypto.randomUUID) {
+                    newId = crypto.randomUUID();
+                } else {
+                    newId = Date.now().toString() + Math.random().toString(36).slice(2);
+                }
+                todos.push({ ...form, completed: false, _id: newId, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+                localStorage.setItem('guest_todos', JSON.stringify(todos));
+            } else {
+                await addTodoService(form);
+            }
             resetForm();
             onAdded?.();
         } catch (err: any) {

@@ -1,0 +1,13 @@
+.main-layout-container {
+    height: 100vh;
+}
+
+.main-layout-content {
+    display: flex;
+
+}
+
+.main-layout-children {
+    flex-grow: 1;
+    padding: 20px;
+}

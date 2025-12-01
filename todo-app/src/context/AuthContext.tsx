@@ -1,9 +1,10 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { authService } from "@/services/auth.server";
-import { setAccessToken } from "@/libs/axiosClient";
+import { authService } from "@/services/auth.service";
+import { setAccessToken } from "@/libs/tokenService";
 import { useRouter } from "next/navigation";
+import { userService } from "@/services/user.service";
 
 interface AuthContextType {
     user: any;
@@ -25,7 +26,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             if (token) {
                 setAccessToken(token);
                 try {
-                    const res = await authService.getMe();
+                    const res = await userService.getUserProfile();
                     setUser(res.data);
                 } catch {
                     setUser(null);

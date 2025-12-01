@@ -1,4 +1,16 @@
-/* Custom classes for AddTodo component layout */
+/* AddTodo form styles */
+.addtodo-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding: 20px;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    align-items: stretch;
+}
+
 .addtodo-title {
     margin: 0;
     font-size: 1.2rem;
@@ -16,7 +28,6 @@
     flex: 1;
     min-width: 180px;
     display: flex;
-    flex-direction: column;
     gap: 0.5rem;
 }
 
@@ -25,19 +36,7 @@
     color: #555;
 }
 
-/* AddTodo form styles */
-.addtodo-form {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-bottom: 24px;
-    padding: 20px;
-    background: #fff;
-    border-radius: 16px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-    align-items: stretch;
-    max-width: 600px;
-}
+
 
 @media (min-width: 640px) {
     .addtodo-form {

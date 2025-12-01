@@ -32,7 +32,7 @@ export const getTodos = async (req: Request, res: Response): Promise<void> => {
         }
     } catch (error) {
         console.error("getTodos error:", error);
-        res.status(500).json({ message: "Failed to fetch todos", error: error instanceof Error ? error.message : error });
+        res.status(500).json({ message: "Lỗi lấy dữ liệu", error: error instanceof Error ? error.message : error });
     }
 }
 
@@ -49,7 +49,7 @@ export const createTodo = async (req: Request, res: Response): Promise<void> => 
         const savedTodo: ITodo = await newTodo.save();
         res.status(201).json(savedTodo);
     } catch (error) {
-        res.status(500).json({ message: "Failed to create todo", error });
+        res.status(500).json({ message: "Lỗi tạo todo", error });
     }
 }
 
@@ -94,5 +94,27 @@ export const deleteTodo = async (req: Request, res: Response): Promise<void> => 
         }
     } catch (error) {
         res.status(500).json({ message: "Failed to delete todo", error });
+    }
+}
+
+export const syncTodos = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const userId = (req as AuthRequest).user._id;
+        const { localTodos } = req.body;
+
+        if (localTodos && localTodos.length > 0) {
+            const todosToInsert = localTodos.map((todo: any) => ({
+                userId: userId,
+                title: todo.title,
+                description: todo.description,
+                priority: todo.priority,
+                completed: todo.completed
+            }));
+            await Todo.insertMany(todosToInsert);
+        }
+        const todos: ITodo[] = await Todo.find({ userId });
+        res.status(200).json({ todos });
+    } catch (error) {
+        res.status(500).json({ message: "Lỗi đồng bộ", error });
     }
 }

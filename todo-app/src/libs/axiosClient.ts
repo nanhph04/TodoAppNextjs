@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getAccessToken, setAccessToken } from './tokenService';
 
 const axiosClient = axios.create({
     baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api',
@@ -8,21 +9,9 @@ const axiosClient = axios.create({
     withCredentials: true,
 });
 
-let accessToken = typeof window !== 'undefined' && localStorage.getItem('accessToken') ? localStorage.getItem('accessToken')! : '';
-
-export function setAccessToken(token: string) {
-    accessToken = token;
-    if (typeof window !== 'undefined') {
-        if (token) {
-            localStorage.setItem('accessToken', token);
-        } else {
-            localStorage.removeItem('accessToken');
-        }
-    }
-}
-
 axiosClient.interceptors.request.use(
     (config) => {
+        const accessToken = getAccessToken();
         if (accessToken) {
             config.headers.Authorization = `Bearer ${accessToken}`;
         }

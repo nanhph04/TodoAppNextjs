@@ -6,7 +6,7 @@ export const authService = {
 
     logout: () => axiosClient.post('/auth/logout'),
 
-    getMe: () => axiosClient.get('/auth/profile'),
-
     refreshToken: () => axiosClient.post('/auth/refresh'),
+
+    syncTodos: (data: any) => axiosClient.post('/todos/sync', data),
 }

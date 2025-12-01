@@ -1,5 +1,5 @@
 "use client";
-import "./todo_item.css";
+import styles from "./TodoItem.module.css";
 import React from "react";
 import { Todo } from "../../../../types/todos";
 
@@ -39,37 +39,25 @@ export default function TodoItem({ todo, onDelete, onToggleComplete }: TodoItemP
     };
 
     return (
-        <li className="item-card item-card-vertical">
-            <div className="item-detail item-detail-vertical">
-                <div className="item-title">{todo.title}</div>
-                {todo.description && <div className="item-description">{todo.description}</div>}
-                <div className="item-status-container item-status-container-vertical">
-                    <span className={`item-status ${todo.completed ? "item-status-completed" : "item-status-pending"}`}>{todo.completed ? "Hoàn thành" : "Chờ xử lý"}</span>
-                    <span className={`item-priority ${todo.priority === "high" ? "item-priority-high" : todo.priority === "medium" ? "item-priority-medium" : "item-priority-low"}`}>{typeof todo.priority === "string" ? (todo.priority.charAt(0).toUpperCase() + todo.priority.slice(1)) : ""}</span>
-                </div>
-                <div className="item-meta">
-                    {todo.createdAt && <span className="item-meta-created">Ngày tạo: {new Date(todo.createdAt).toLocaleString()}</span>}
-                    {todo.updatedAt && <span className="item-meta-updated">Cập nhật: {new Date(todo.updatedAt).toLocaleString()}</span>}
-                </div>
-            </div>
+        <div className={styles["todo-card"]}>
+            <div className={styles["todo-content"]}>
+                <p className={styles["todo-title"]}>{todo.title}</p>
+                <p className={styles["todo-description"]}>{todo.description}</p>
 
-            <div className="change-complete-container change-complete-container-vertical">
-                {error && <span className="item-error">{error}</span>}
-                <button
-                    onClick={handleToggleStatus}
-                    disabled={toggleLoading}
-                    className={`btn-action ${todo.completed ? "btn-status-completed" : "btn-status-pending"} ${toggleLoading ? "btn-loading" : "btn-hover-scale"}`}
-                >
-                    {todo.completed ? "Đánh dấu chưa hoàn thành" : "Đánh dấu hoàn thành"}
-                </button>
-                <button
-                    onClick={handleDelete}
-                    disabled={loading}
-                    className={`btn-action ${loading ? "btn-delete-loading" : "btn-delete btn-hover-scale"}`}
-                >
-                    {loading ? "Đang xóa..." : "Xóa"}
-                </button>
             </div>
-        </li>
+            <div className={styles["todo-status"]}>
+                <p>Piority: <span
+                    className={
+                        todo.priority === "low" ? styles["priority-low"] :
+                            todo.priority === "medium" ? styles["priority-medium"] :
+                                todo.priority === "high" ? styles["priority-high"] : ""
+                    }
+                >{todo.priority}</span></p>
+                <p>Status: <span
+                    className={todo.completed ? styles["status-completed"] : styles["status-pending"]}
+                >{todo.completed ? "Completed" : "Pending"}</span></p>
+                <p>Created at: <span className={styles["todo-createdAt"]}>{new Date(todo.createdAt).toLocaleDateString()}</span></p>
+            </div>
+        </div>
     );
 }

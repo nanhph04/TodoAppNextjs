@@ -8,7 +8,7 @@ import SocialLoginRow from '@/components/ui/SocialLink/SocialLink';
 import LoginButton from '@/components/ui/AuthButton/AuthButton';
 import { FaUserPen } from "react-icons/fa6";
 import { useState } from 'react';
-import { authService } from '@/services/auth.server';
+import { authService } from '@/services/auth.service';
 import { useAuth } from '@/context/AuthContext';
 export default function RegisterForm() {
     const { login } = useAuth();

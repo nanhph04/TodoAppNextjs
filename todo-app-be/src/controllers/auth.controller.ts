@@ -3,7 +3,6 @@ import User from '../models/user.model.js';
 import RefreshToken from '../models/refreshToken.model.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import type { AuthRequest } from '../milddlewares/auth.middleware.js';
 import '../configs/env.js';
 
 const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET;
@@ -87,16 +86,11 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             httpOnly: true,
             secure: false,
             sameSite: 'strict',
-            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 ngày
+            maxAge: 7 * 24 * 60 * 60 * 1000
         });
 
         res.status(200).json({
-            accessToken,
-            user: {
-                _id: user._id,
-                fullName: user.fullName,
-                email: user.email
-            }
+            accessToken
         });
 
     } catch (error) {
@@ -105,22 +99,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     }
 }
 
-//--- GET USER INFO ---
-export const getMe = async (req: AuthRequest, res: Response): Promise<void> => {
-    try {
-        const user = req.user;
-        const result = {
-            _id: user._id,
-            fullName: user.fullName,
-            email: user.email,
-            // Thêm các trường khác nếu muốn (avatar, role...)
-        };
-        console.log("GET /profile result:", result); // Log kết quả trả về
-        res.status(200).json(result);
-    } catch (error) {
-        res.status(500).json({ message: "Server Error" });
-    }
-}
 
 //--- REFRESH TOKEN ---
 export const refreshToken = async (req: Request, res: Response): Promise<void> => {
@@ -138,12 +116,10 @@ export const refreshToken = async (req: Request, res: Response): Promise<void> =
                 res.status(403).json({ message: "Refresh token not found!" });
                 return;
             }
-            // Kiểm tra hạn sử dụng
             if (storedToken.expiresAt < new Date()) {
                 res.status(403).json({ message: "Refresh token expired!" });
                 return;
             }
-            // Xác thực token
             const decoded = jwt.verify(refreshToken, REFRESH_TOKEN_SECRET as string) as { userId: string };
             const user = await User.findById(decoded.userId);
             if (!user) {

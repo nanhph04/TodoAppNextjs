@@ -1,6 +1,6 @@
 
 import { Router } from "express";
-import { getTodos, createTodo, updateTodo, deleteTodo } from "../controllers/todo.controller.js";
+import { getTodos, createTodo, updateTodo, deleteTodo, syncTodos } from "../controllers/todo.controller.js";
 
 /**
  * @swagger
@@ -91,5 +91,7 @@ router.put('/:id', updateTodo);
  *         description: Xóa thành công
  */
 router.delete('/:id', deleteTodo);
+
+router.post('/sync', syncTodos);
 
 export default router;

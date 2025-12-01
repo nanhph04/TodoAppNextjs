@@ -7,9 +7,9 @@ import InputWithIcon from '@/components/ui/InputIcon/InputIcon';
 import SocialLoginRow from '@/components/ui/SocialLink/SocialLink';
 import LoginButton from '@/components/ui/AuthButton/AuthButton';
 import { useState } from 'react';
-import { authService } from '@/services/auth.server';
+import { authService } from '@/services/auth.service';
 import { useAuth } from '@/context/AuthContext';
-import { setAccessToken } from '@/libs/axiosClient';
+import { setAccessToken } from '@/libs/tokenService';
 export default function LoginForm() {
     const { login } = useAuth();
     const [form, setForm] = useState({
@@ -21,6 +21,23 @@ export default function LoginForm() {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setForm({ ...form, [e.target.name]: e.target.value });
+    };
+
+    const getLocalTodos = () => {
+        const localData = localStorage.getItem('guest_todos');
+        return localData ? JSON.parse(localData) : [];
+    };
+
+    const syncLocalTodosToServer = async () => {
+        const localTodos = getLocalTodos();
+        if (localTodos.length > 0) {
+            try {
+                await authService.syncTodos({ localTodos });
+                localStorage.removeItem('guest_todos');
+            } catch (syncErr) {
+                console.error('Error syncing local todos:', syncErr);
+            }
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -36,9 +53,11 @@ export default function LoginForm() {
                 email: form.email,
                 password: form.password
             });
-            const { accessToken, user } = res.data;
-            if (accessToken && user) {
-                login(accessToken, user);
+            const { accessToken } = res.data;
+            if (accessToken) {
+                setAccessToken(accessToken);
+                await syncLocalTodosToServer();
+                login(accessToken, null);
             } else {
                 setError('Đăng nhập thất bại, vui lòng thử lại');
             }
