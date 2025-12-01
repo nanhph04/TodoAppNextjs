@@ -8,10 +8,17 @@ const axiosClient = axios.create({
     withCredentials: true,
 });
 
-let accessToken = '';
+let accessToken = typeof window !== 'undefined' && localStorage.getItem('accessToken') ? localStorage.getItem('accessToken')! : '';
 
 export function setAccessToken(token: string) {
     accessToken = token;
+    if (typeof window !== 'undefined') {
+        if (token) {
+            localStorage.setItem('accessToken', token);
+        } else {
+            localStorage.removeItem('accessToken');
+        }
+    }
 }
 
 axiosClient.interceptors.request.use(

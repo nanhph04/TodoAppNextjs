@@ -20,8 +20,8 @@ export default function ProfilePage() {
     return (
         <div>
             <h1>User Profile</h1>
-            <h2>Fullname: {user.fullname || user.fullName || user.name}</h2>
-            <h2>Email: {user.email}</h2>
+            <h2>Fullname: {user.fullname || user.fullName || user.name || "Không có tên"}</h2>
+            <h2>Email: {user.email || "Không có email"}</h2>
             <button onClick={logout}>Log out</button>
         </div>
     );

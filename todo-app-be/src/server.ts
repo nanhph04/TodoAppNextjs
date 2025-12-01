@@ -8,21 +8,22 @@ import morgan from 'morgan';
 import connectDB from './configs/db.js';
 import cookieParser from 'cookie-parser';
 
-dotenv.config();
+dotenv.config({ path: "./.env" });
 
 const app: Application = express();
 const PORT = process.env.PORT;
 const MONGODB_URI = process.env.MONGODB_URI;
 
 app.use(express.json());
+app.use(cookieParser());
 app.use(cors({
     origin: 'http://localhost:3000',
     credentials: true
 }));
-app.use(cookieParser());
-app.use(morgan('dev'));
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
+app.use(morgan('dev'));
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/api', indexRouter);
 
 const startServer = async () => {

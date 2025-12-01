@@ -8,17 +8,12 @@ function redirectToErrorPage() {
     }
 }
 
-// --- 1. GET TODOS (Đã sửa lỗi import) ---
 export async function getTodos(page: number = 1, limit: number = 5) {
     let config: any = {
         params: { page, limit }
     };
-
-    // Chỉ chạy đoạn code này trên Server (Node.js)
     if (typeof window === 'undefined') {
         try {
-            // --- THAY ĐỔI Ở ĐÂY: Dùng Dynamic Import ---
-            // Thay vì import ở đầu file, ta import ở đây để Client không bị lỗi
             const { cookies } = await import("next/headers");
 
             const cookieStore = await cookies();
@@ -26,7 +21,6 @@ export async function getTodos(page: number = 1, limit: number = 5) {
                 Cookie: cookieStore.toString()
             };
         } catch (error) {
-            // Bỏ qua lỗi nếu không lấy được cookie (ví dụ chạy ở môi trường không hỗ trợ)
             console.warn("Could not load cookies on server side", error);
         }
     }
@@ -36,13 +30,11 @@ export async function getTodos(page: number = 1, limit: number = 5) {
         return res.data;
     } catch (error: any) {
         if (error.response?.status !== 401) {
-            // Xử lý lỗi khác 401 tùy ý
+            redirectToErrorPage();
         }
         throw error;
     }
 }
-
-// --- 2. CÁC HÀM CÒN LẠI (Giữ nguyên) ---
 
 export async function addTodo({ title, description, priority }: { title: string; description: string; priority: "low" | "medium" | "high" }) {
     try {

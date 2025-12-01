@@ -62,6 +62,7 @@ export default function RegisterForm() {
                 <InputWithIcon icon={<MdEmail />} type="email" placeholder="Enter your email" name="email" value={form.email} onChange={handleChange} />
                 <InputWithIcon icon={<RiLockPasswordFill />} type="password" placeholder="Enter your password" name="password" value={form.password} onChange={handleChange} />
                 <LoginButton label={loading ? 'Đang đăng ký...' : 'Sign Up'} />
+                {error && <div style={{ color: 'red', marginTop: '1rem', fontWeight: 500 }}>{error}</div>}
             </form>
             <footer className={style.loginFormFooter}>
                 <SocialLoginRow />

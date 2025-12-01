@@ -1,5 +1,5 @@
 import express from "express";
-import { register, login, refreshToken, getMe } from "../controllers/auth.controller.js";
+import { register, login, refreshToken, logout } from "../controllers/auth.controller.js";
 import { protect } from "../milddlewares/auth.middleware.js";
 
 /**
@@ -63,7 +63,7 @@ router.post('/login', login);
 
 /**
  * @swagger
- * /api/auth/refresh-token:
+ * /api/auth/refresh:
  *   post:
  *     summary: Làm mới access token
  *     tags: [Auth]
@@ -83,6 +83,6 @@ router.post('/login', login);
  */
 router.post('/refresh', refreshToken);
 
-router.get('/profile', protect, getMe);
+router.post('/logout', logout);
 
 export default router;

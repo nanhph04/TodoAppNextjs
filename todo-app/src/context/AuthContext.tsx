@@ -20,30 +20,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const router = useRouter();
 
     useEffect(() => {
-        // Chỉ gọi refreshToken nếu chưa có user
-        if (!user) {
-            const initAuth = async () => {
+        const initAuth = async () => {
+            const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : '';
+            if (token) {
+                setAccessToken(token);
                 try {
-                    const res = await authService.refreshToken();
-                    const { accessToken, user } = res.data;
-                    setAccessToken(accessToken);
-                    setUser(user || { name: "User from Token" });
-                } catch (error) {
-                    console.log("Phiên đăng nhập hết hạn");
-                } finally {
-                    setIsLoading(false);
+                    const res = await authService.getMe();
+                    setUser(res.data);
+                } catch {
+                    setUser(null);
                 }
-            };
-            initAuth();
-        } else {
+            } else {
+                setUser(null);
+            }
             setIsLoading(false);
-        }
-    }, [user]);
+        };
+        initAuth();
+    }, []);
 
     const login = (token: string, userData: any) => {
         setAccessToken(token);
         setUser(userData);
-        router.push("/profile");
+        router.push("/");
     };
 
 

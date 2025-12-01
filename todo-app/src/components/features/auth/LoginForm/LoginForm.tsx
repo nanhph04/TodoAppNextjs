@@ -9,6 +9,7 @@ import LoginButton from '@/components/ui/AuthButton/AuthButton';
 import { useState } from 'react';
 import { authService } from '@/services/auth.server';
 import { useAuth } from '@/context/AuthContext';
+import { setAccessToken } from '@/libs/axiosClient';
 export default function LoginForm() {
     const { login } = useAuth();
     const [form, setForm] = useState({

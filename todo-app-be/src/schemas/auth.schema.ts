@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const registerSchema = z.object({
     body: z.object({
-        username: z
+        fullName: z
             .string()
             .min(2, { message: "Họ tên phải có ít nhất 2 ký tự" }),
         email: z

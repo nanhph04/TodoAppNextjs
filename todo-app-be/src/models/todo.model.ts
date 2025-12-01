@@ -4,6 +4,7 @@ export interface ITodo extends Document {
     title: string;
     description?: string;
     priority?: 'low' | 'medium' | 'high';
+    userId: string;
     completed: boolean;
     createdAt: Date;
     updatedAt: Date;
