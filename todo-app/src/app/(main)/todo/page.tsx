@@ -1,10 +1,7 @@
-import TodoListContainer from "@/components/features/tasks/TodoListContainer/TodoListContainer";
-import MainLayout from "../layout";
+import TodoPage from "@/ui/pages/todo";
 
-export default function TodoPage() {
+export default function Todo() {
     return (
-        <TodoListContainer />
-
-
+        <TodoPage />
     );
 }

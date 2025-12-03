@@ -1,6 +1,6 @@
-import Header from "@/components/layouts/Header/Header";
-import Sidebar from "@/components/layouts/Sidebar/Sidebar";
-import { AuthProvider } from "@/context/AuthContext";
+import Header from "@/ui/components/Header/Header";
+import Sidebar from "@/ui/components/Sidebar/Sidebar";
+import { AuthProvider } from "@/logic/stores/AuthContext";
 import "./layout.css";
 export default function MainLayout({
     children,

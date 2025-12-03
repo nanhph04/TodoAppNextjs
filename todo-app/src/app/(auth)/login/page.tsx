@@ -1,7 +1,7 @@
 "use client";
 import AuthLayout from '@/app/(auth)/layout';
-import LoginForm from '@/components/features/auth/LoginForm/LoginForm';
-import { useAuth } from '@/context/AuthContext';
+import LoginForm from '@/ui/pages/auth/LoginForm/LoginForm';
+import { useAuth } from '@/logic/stores/AuthContext';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -11,12 +11,12 @@ export default function LoginPage() {
     const router = useRouter();
     useEffect(() => {
         if (user) {
-            router.replace("/profile");
+            router.replace("/");
         }
     }, [user, router]);
     if (user) return null;
     return (
-        <AuthLayout imageSrc="/assets/images/img-auth-1.png">
+        <AuthLayout>
             <LoginForm />
         </AuthLayout>
     );

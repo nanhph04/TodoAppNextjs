@@ -1,5 +1,5 @@
 "use client";
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/logic/stores/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import MainLayout from '../layout';

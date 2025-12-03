@@ -1,35 +1,25 @@
 import { type Request, type Response } from "express";
-import { Types } from "mongoose";
 import type { AuthRequest } from "../milddlewares/auth.middleware.js";
-import Todo, { type ITodo } from "../models/todo.model.js";
+
+import {
+    getTodosService,
+    createTodoService,
+    updateTodoService,
+    deleteTodoService,
+    syncTodosService
+} from "../services/todo.service.js";
 
 export const getTodos = async (req: Request, res: Response): Promise<void> => {
     try {
-        const page = parseInt(req.query.page as string) || 1;
-        const limit = parseInt(req.query.limit as string) || 10;
-        const skip = (page - 1) * limit;
-
+        const page = req.query.page ? parseInt(req.query.page as string) : undefined;
+        const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
         const userId = (req as AuthRequest).user?._id;
         if (!userId) {
             res.status(401).json({ message: "Unauthorized: Missing userId" });
             return;
         }
-
-        if (req.query.page || req.query.limit) {
-            const [todos, total] = await Promise.all([
-                Todo.find({ userId }).skip(skip).limit(limit),
-                Todo.countDocuments({ userId }),
-            ]);
-            res.status(200).json({
-                todos,
-                total,
-                page,
-                totalPages: Math.ceil(total / limit),
-            });
-        } else {
-            const todos: ITodo[] = await Todo.find({ userId });
-            res.status(200).json({ todos, total: todos.length });
-        }
+        const result = await getTodosService(userId, page, limit);
+        res.status(200).json(result);
     } catch (error) {
         console.error("getTodos error:", error);
         res.status(500).json({ message: "Lỗi lấy dữ liệu", error: error instanceof Error ? error.message : error });
@@ -38,15 +28,8 @@ export const getTodos = async (req: Request, res: Response): Promise<void> => {
 
 export const createTodo = async (req: Request, res: Response): Promise<void> => {
     try {
-        const { title, description, priority } = req.body;
-        const newTodo: ITodo = new Todo({
-            userId: (req as AuthRequest).user._id,
-            title,
-            description,
-            priority,
-            completed: false,
-        });
-        const savedTodo: ITodo = await newTodo.save();
+        const userId = (req as AuthRequest).user._id;
+        const savedTodo = await createTodoService(userId, req.body);
         res.status(201).json(savedTodo);
     } catch (error) {
         res.status(500).json({ message: "Lỗi tạo todo", error });
@@ -56,17 +39,8 @@ export const createTodo = async (req: Request, res: Response): Promise<void> => 
 export const updateTodo = async (req: Request, res: Response): Promise<void> => {
     try {
         const { id } = req.params;
-        const { title, description, priority, completed } = req.body;
         const userId = (req as AuthRequest).user._id;
-        if (!id || !Types.ObjectId.isValid(id)) {
-            res.status(400).json({ message: "Invalid todo id" });
-            return;
-        }
-        const updatedTodo: ITodo | null = await Todo.findOneAndUpdate(
-            { _id: new Types.ObjectId(id), userId },
-            { title, description, priority, completed },
-            { new: true }
-        );
+        const updatedTodo = await updateTodoService(userId, id, req.body);
         if (updatedTodo) {
             res.status(200).json(updatedTodo);
         } else {
@@ -80,13 +54,8 @@ export const updateTodo = async (req: Request, res: Response): Promise<void> => 
 export const deleteTodo = async (req: Request, res: Response): Promise<void> => {
     try {
         const { id } = req.params;
-        // Chỉ cho phép xóa todo của user hiện tại
         const userId = (req as AuthRequest).user._id;
-        if (!id || !Types.ObjectId.isValid(id)) {
-            res.status(400).json({ message: "Invalid todo id" });
-            return;
-        }
-        const deletedTodo: ITodo | null = await Todo.findOneAndDelete({ _id: new Types.ObjectId(id), userId });
+        const deletedTodo = await deleteTodoService(userId, id);
         if (deletedTodo) {
             res.status(200).json({ message: "Todo deleted successfully" });
         } else {
@@ -101,18 +70,7 @@ export const syncTodos = async (req: Request, res: Response): Promise<void> => {
     try {
         const userId = (req as AuthRequest).user._id;
         const { localTodos } = req.body;
-
-        if (localTodos && localTodos.length > 0) {
-            const todosToInsert = localTodos.map((todo: any) => ({
-                userId: userId,
-                title: todo.title,
-                description: todo.description,
-                priority: todo.priority,
-                completed: todo.completed
-            }));
-            await Todo.insertMany(todosToInsert);
-        }
-        const todos: ITodo[] = await Todo.find({ userId });
+        const todos = await syncTodosService(userId, localTodos);
         res.status(200).json({ todos });
     } catch (error) {
         res.status(500).json({ message: "Lỗi đồng bộ", error });

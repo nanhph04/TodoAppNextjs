@@ -1,0 +1,163 @@
+/* AddTodo form styles */
+.addtodo-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #f6f8fa;
+}
+
+.addtodo-form {
+    display: flex;
+    flex-direction: row;
+    gap: 32px;
+    margin-bottom: 24px;
+    padding: 32px 36px;
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.10);
+    align-items: flex-start;
+    min-width: 640px;
+    max-width: 900px;
+    width: 100%;
+}
+
+.addtodo-title {
+    margin: 0 0 18px 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2563eb;
+    text-align: center;
+    letter-spacing: 0.5px;
+}
+
+.addtodo-fields {
+    display: flex;
+    gap: 1.2rem;
+    flex-direction: column;
+    flex: 2;
+}
+
+.addtodo-field {
+    flex: 1;
+    min-width: 180px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.addtodo-label {
+    font-weight: 600;
+    color: #2563eb;
+    margin-bottom: 2px;
+}
+
+.addtodo-input,
+.addtodo-select {
+    flex: 1;
+    padding: 12px 16px;
+    border: 1.5px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 1rem;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+    outline: none;
+    transition: border 0.2s;
+    background: #f9fafb;
+}
+
+.addtodo-input:focus,
+.addtodo-select:focus {
+    border-color: #2563eb;
+    background: #e0e7ff;
+}
+
+.addtodo-input:disabled,
+.addtodo-select:disabled {
+    background: #f3f4f6;
+}
+
+.addtodo-textarea {
+    min-height: 80px;
+    padding: 12px 16px;
+    border: 1.5px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 1rem;
+    background: #f9fafb;
+    resize: vertical;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+    outline: none;
+    transition: border 0.2s;
+}
+
+.addtodo-textarea:focus {
+    border-color: #2563eb;
+    background: #e0e7ff;
+}
+
+.priority-group {
+    display: flex;
+    gap: 1.2rem;
+    margin-top: 4px;
+}
+
+.priority-extreme {
+    color: #f44336;
+    font-weight: 600;
+}
+
+.priority-moderate {
+    color: #2196f3;
+    font-weight: 600;
+}
+
+.priority-low {
+    color: #43a047;
+    font-weight: 600;
+}
+
+.addtodo-btn {
+    padding: 18px 40px;
+    border-radius: 10px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(90deg, #2563eb 0%, #3b82f6 100%);
+    border: none;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08);
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+    margin-top: 0;
+    align-self: flex-end;
+}
+
+.addtodo-btn:hover:not(:disabled) {
+    background: linear-gradient(90deg, #1d4ed8 0%, #3b82f6 100%);
+    transform: scale(1.05);
+}
+
+.addtodo-btn:disabled,
+.addtodo-btn-loading {
+    background: #93c5fd;
+    cursor: not-allowed;
+}
+
+.addtodo-error {
+    color: #ef4444;
+    margin-top: 8px;
+    font-size: 1rem;
+    text-align: center;
+}
+
+@media (max-width: 900px) {
+    .addtodo-form {
+        min-width: 340px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 18px;
+    }
+
+    .addtodo-btn {
+        margin-top: 18px;
+        align-self: stretch;
+    }
+}

@@ -1,6 +1,6 @@
 // ...existing code...
 import style from './layout.module.css';
-import { AuthProvider } from '@/context/AuthContext';
+import { AuthProvider } from '@/logic/stores/AuthContext';
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
     return (
