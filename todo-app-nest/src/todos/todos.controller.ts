@@ -1,5 +1,5 @@
-
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Req, Post, Body, Patch, Param, Delete, Query, Put } from '@nestjs/common';
+import type { Request } from 'express';
 import { TodosService } from './todos.service';
 import { CreateTodoDto } from './dto/create-todo.dto';
 import { UpdateTodoDto } from './dto/update-todo.dto';
@@ -29,7 +29,7 @@ export class TodosController {
   }
 
   @UseGuards(AuthGuard('jwt'))
-  @Patch(':id')
+  @Put(':id')
   update(@Param('id') id: string, @Body() updateTodoDto: UpdateTodoDto) {
     return this.todosService.update(id, updateTodoDto);
   }
@@ -41,27 +41,41 @@ export class TodosController {
   }
 
   @UseGuards(AuthGuard('jwt'))
-  @Get('user/:userId')
-  findByUserId(@Param('userId') userId: string) {
+  @Get('me')
+  findMyTodos(@Req() req: Request) {
+    const userId = (req.user as any)?.sub;
     return this.todosService.findByUserId(userId, 1, 10);
   }
 
   @UseGuards(AuthGuard('jwt'))
-  @Get('user/:userId/page/:page/limit/:limit')
+  @Get('user')
   findByUserIdPaginated(
     @Param('userId') userId: string,
-    @Param('page') page: number,
+    @Query('page') page: number,
     @Param('limit') limit: number,
   ) {
+    console.log(userId, page, limit);
     return this.todosService.findByUserId(userId, page, limit);
   }
 
   @UseGuards(AuthGuard('jwt'))
-  @Post('sync/:userId')
-  syncTodos(
+  @Get('user/:userId')
+  findByUserId(
     @Param('userId') userId: string,
-    @Body() localTodos: CreateTodoDto[],
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
   ) {
+    return this.todosService.findByUserId(userId, Number(page), Number(limit));
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post('sync')
+  syncTodos(
+    @Req() req: Request,
+    @Body() body: { localTodos: CreateTodoDto[] },
+  ) {
+    const userId = (req.user as any)?.sub;
+    const localTodos = body.localTodos;
     return this.todosService.syncTodos(userId, localTodos);
   }
 

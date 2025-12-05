@@ -1,6 +1,6 @@
 import axiosClient from "@/logic/libs/axiosClient";
 
-const API_URL = "/todos";
+
 
 function redirectToErrorPage() {
     // Đã bỏ logic chuyển trang khi lỗi
@@ -8,7 +8,7 @@ function redirectToErrorPage() {
 
 export async function getTodos(userId: string, page: number = 1, limit: number = 5) {
     try {
-        const url = `/api/todos/user/${userId}/page/${page}/limit/${limit}`;
+        const url = `/api/todos/user/${userId}?page=${page}&limit=${limit}`;
         console.log("GET TODOS URL:", url);
         const res = await axiosClient.get(url);
         console.log("GET TODOS RESPONSE:", res.data);
@@ -21,7 +21,8 @@ export async function getTodos(userId: string, page: number = 1, limit: number =
         if (typeof window === 'undefined') {
             console.error("[SERVER] GET TODOS ERROR:", error);
         }
-        // Không chuyển trang khi lỗi
+
+
         throw error;
     }
 }
@@ -63,6 +64,15 @@ export async function deleteTodo(id: string) {
         return res.data;
     } catch (error: any) {
         // Không chuyển trang khi lỗi
+        throw error;
+    }
+}
+const API_URL = "/api/todos";
+export async function syncTodos(data: any) {
+    try {
+        const res = await axiosClient.post(`${API_URL}/sync`, data);
+        return res.data;
+    } catch (error: any) {
         throw error;
     }
 }

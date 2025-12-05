@@ -8,7 +8,9 @@ import SocialLoginRow from '@/ui/components/Common/SocialLink/SocialLink';
 import LoginButton from '@/ui/components/Common/AuthButton/AuthButton';
 import { useState } from 'react';
 import { authService } from '@/data/services/auth.service';
+import { syncTodos } from '@/data/services/todo.service';
 import { useAuth } from '@/logic/stores/AuthContext';
+import { useAxiosAuthSync } from '@/logic/libs/axiosClient';
 export default function LoginForm() {
     const { login } = useAuth();
     const [form, setForm] = useState({
@@ -31,7 +33,8 @@ export default function LoginForm() {
         const localTodos = getLocalTodos();
         if (localTodos.length > 0) {
             try {
-                await authService.syncTodos({ localTodos });
+                console.log('Dữ liệu truyền đi syncTodos:', localTodos);
+                await syncTodos({ localTodos });
                 localStorage.removeItem('guest_todos');
             } catch (syncErr) {
                 console.error('Error syncing local todos:', syncErr);
@@ -56,6 +59,7 @@ export default function LoginForm() {
             if (accessToken) {
                 await syncLocalTodosToServer();
                 login(accessToken, null);
+                useAxiosAuthSync();
             } else {
                 setError('Đăng nhập thất bại, vui lòng thử lại');
             }

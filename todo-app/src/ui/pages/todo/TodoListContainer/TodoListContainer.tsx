@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 export default function TodoListContainer() {
-    const { user, userId } = useAuth();
+    const { userId } = useAuth();
     const router = useRouter();
     const searchParams = useSearchParams();
     const [todos, setTodos] = useState([]);

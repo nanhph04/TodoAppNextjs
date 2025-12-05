@@ -47,7 +47,11 @@ export class AuthService {
     }
 
     async logout(userId: string) {
-        await this.userModel.findByIdAndUpdate(userId, { refreshToken: null });
+        // Remove all token-related fields (refreshToken, accessToken if stored, etc.)
+        await this.userModel.findByIdAndUpdate(userId, {
+            refreshToken: null,
+            // If you store accessToken or other token fields, add them here
+        });
         return true;
     }
 

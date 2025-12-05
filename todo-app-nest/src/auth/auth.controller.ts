@@ -33,18 +33,23 @@ export class AuthController {
     }
 
     @UseGuards(AuthGuard('jwt'))
-    @Get('logout')
-    logout(@Req() req: Request) {
+    @Post('logout')
+    logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
         const userId = req.user ? req.user['sub'] : undefined;
         if (!userId) {
             throw new Error('User not authenticated');
         }
+        // Clear the refreshToken cookie
+        res.clearCookie('refreshToken', {
+            httpOnly: true,
+            secure: true,
+            sameSite: 'strict',
+        });
         return this.authService.logout(userId);
-
     }
 
     @UseGuards(AuthGuard('jwt-refresh'))
-    @Get('refresh')
+    @Post('refresh')
     refreshTokens(@Req() req: Request) {
         if (!req.user || !req.user['sub'] || !req.user['refreshToken']) {
             throw new Error('User or refresh token not authenticated');

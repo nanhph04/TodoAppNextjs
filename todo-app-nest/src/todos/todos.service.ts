@@ -38,11 +38,15 @@ export class TodosService {
   }
 
   async remove(id: string): Promise<Todo> {
-    const deletedTodo = await this.todoModel.findByIdAndDelete(id).exec();
-    if (!deletedTodo) {
-      throw new NotFoundException('Todo not found');
-    }
-    return deletedTodo;
+    console.log('mmmmm');
+    let a = 0
+    return a as any;
+
+    // const deletedTodo = await this.todoModel.findByIdAndDelete(id).exec();
+    // if (!deletedTodo) {
+    //   throw new NotFoundException('Todo not found');
+    // }
+    // return deletedTodo;
   }
 
   async findByUserId(userId: string, page: number, limit: number): Promise<{ data: Todo[]; total: number }> {
@@ -61,16 +65,20 @@ export class TodosService {
   }
 
   async syncTodos(userId: string, localTodos: CreateTodoDto[]): Promise<Todo[]> {
-    if (!Types.ObjectId.isValid(userId)) {
+    if (!userId) {
       throw new NotFoundException('Invalid User ID');
     }
-    const userObjectId = new Types.ObjectId(userId);
     const result: Todo[] = [];
 
     for (const localTodo of localTodos) {
+      // Remove _id if not a valid ObjectId
+      const anyTodo = localTodo as any;
+      if (anyTodo._id && !Types.ObjectId.isValid(anyTodo._id)) {
+        delete anyTodo._id;
+      }
       const newTodo = new this.todoModel({
         ...localTodo,
-        userId: userObjectId,
+        userId: userId, // Save as string
         completed: localTodo.completed ?? false,
         createdAt: new Date(),
         updatedAt: new Date(),
