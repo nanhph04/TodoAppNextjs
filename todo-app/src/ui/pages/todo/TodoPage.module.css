@@ -1,0 +1,6 @@
+.todoPageContainer {
+    padding: 2rem;
+    border: 1px solid #e0e0e0;
+    display: flex;
+    gap: 1rem;
+}

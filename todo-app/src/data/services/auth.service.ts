@@ -4,7 +4,9 @@ export const authService = {
 
     register: (data: any) => axiosClient.post('/auth/signup', data),
 
-    logout: (userId: string) => axiosClient.post('/auth/logout', { userId }),
+    logout: () => axiosClient.post('/auth/logout'),
 
     refreshToken: () => axiosClient.post('/auth/refresh'),
+
+    loginWithGoogle: (token: string) => axiosClient.post('/auth/google', { token }),
 }

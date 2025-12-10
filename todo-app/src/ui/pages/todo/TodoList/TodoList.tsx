@@ -5,6 +5,7 @@ import { Todo } from "@/data/interfaces/todos";
 import { getTodos, deleteTodo as deleteTodoService, updateTodoStatus } from "@/data/services/todo.service";
 import { useAuth } from "@/logic/stores/AuthContext";
 import "./todo_list.css";
+import Button from "@/ui/components/Common/Button/Button.base";
 
 interface TodoListProps {
     todos: Todo[];
@@ -37,7 +38,9 @@ export default function TodoList({ todos: initialTodos, page, totalPages }: Todo
         if (userId) {
             try {
                 await deleteTodoService(id);
-                setTodos((prev) => prev.filter(todo => todo._id !== id));
+                await getTodos(currentPage, pageSize).then((data) => {
+                    setTodos(data.data || []);
+                });
             } catch (err) {
                 alert("Delete failed");
             }
@@ -51,8 +54,10 @@ export default function TodoList({ todos: initialTodos, page, totalPages }: Todo
     const updateStatus = async (id: string, completed: boolean) => {
         if (userId) {
             try {
-                const updated = await updateTodoStatus(id, completed);
-                setTodos((prev) => prev.map(todo => todo._id === id ? { ...todo, completed: updated.completed, completedAt: updated.completedAt } : todo));
+                await updateTodoStatus(id, completed);
+                await getTodos(currentPage, pageSize).then((data) => {
+                    setTodos(data.data || []);
+                });
             } catch (err) {
                 alert("Update failed");
             }
@@ -66,27 +71,15 @@ export default function TodoList({ todos: initialTodos, page, totalPages }: Todo
     };
 
     const handlePageChange = (newPage: number) => {
-        window.location.href = `/?page=${newPage}`;
-    };
-
-    const fetchTodos = async () => {
-        if (userId) {
-            try {
-                const data = await getTodos(userId);
-                setTodos(Array.isArray(data.todos) ? data.todos : []);
-            } catch {
-                alert("Fetch todos failed");
-            }
-        } else {
-            setTodos(getLocalTodos());
-        }
+        window.location.href = `/?page=${newPage}&limit=5`;
     };
 
     React.useEffect(() => {
         if (!userId) {
             setTodos(getLocalTodos());
         }
-    }, [userId]);
+        setTodos(initialTodos);
+    }, [userId, initialTodos]);
 
     return (
         <div className="todolist-container">
@@ -107,21 +100,21 @@ export default function TodoList({ todos: initialTodos, page, totalPages }: Todo
                 </li>
             </ul>
             <div className="todolist-pagination">
-                <button
+                <Button
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
                     className="todolist-btn todolist-btn-prev"
+                    title="← Previous"
                 >
-                    ← Previous
-                </button>
+                </Button>
                 <span className="todolist-pageinfo">Page {currentPage} / {totalPageCount}</span>
-                <button
+                <Button
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPageCount}
                     className="todolist-btn todolist-btn-next"
+                    title="  Next →"
                 >
-                    Next →
-                </button>
+                </Button>
             </div>
         </div>
     );

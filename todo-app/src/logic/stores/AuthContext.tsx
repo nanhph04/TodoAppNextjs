@@ -1,13 +1,14 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { authService } from "@/data/services/auth.service";
 import { useRouter } from "next/navigation";
 import { userService } from "@/data/services/user.service";
 import { jwtDecode } from "jwt-decode";
+import { User } from "@/data/interfaces/users";
 
 interface AuthContextType {
-    user: any;
+    user: User | null;
     accessToken: string;
     userId: string;
     login: (token: string, userData: any) => void;
@@ -17,90 +18,96 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+const getUserIdFromToken = (token: string): string => {
+    try {
+        const decoded: any = jwtDecode(token);
+        return decoded.sub || decoded.userId || decoded._id || decoded.id || '';
+    } catch {
+        return "";
+    }
+}
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-    const [user, setUser] = useState<any>(null);
+    const [user, setUser] = useState<User | null>(null);
     const [accessToken, setAccessTokenState] = useState<string>("");
     const [userId, setUserId] = useState<string>("");
     const [isLoading, setIsLoading] = useState(true);
     const router = useRouter();
 
+    const setAuthData = useCallback((token: string, userData: User | null) => {
+        const id = token ? getUserIdFromToken(token) : "";
+        setAccessTokenState(token);
+        setUser(userData);
+        setUserId(id);
+
+        if (typeof window !== 'undefined') {
+            if (token) {
+                localStorage.setItem('accessToken', token);
+            } else {
+                localStorage.removeItem('accessToken');
+            }
+        }
+    }, []);
+
     useEffect(() => {
         const initAuth = async () => {
-            const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : '';
-            if (token) {
-                setAccessTokenState(token);
+            const storedToken = localStorage.getItem('accessToken');
+            if (storedToken) {
+                setAccessTokenState(storedToken);
+                setUserId(getUserIdFromToken(storedToken));
                 try {
-                    let decodedUserId = '';
-                    try {
-                        const decoded: any = jwtDecode(token);
-                        decodedUserId = decoded.sub || decoded.userId || decoded._id || decoded.id || '';
-                    } catch {
-                        decodedUserId = '';
-                    }
-                    setUserId(decodedUserId);
-                    if (typeof window !== 'undefined' && decodedUserId) {
-                        localStorage.setItem('userId', decodedUserId);
-                    }
-                    let userProfile = null;
-                    if (decodedUserId) {
-                        const res = await userService.getUserProfile(decodedUserId);
-                        userProfile = res.data;
-                    }
-                    setUser(userProfile);
-                } catch {
-                    setUser(null);
-                    setUserId("");
-                    if (typeof window !== 'undefined') {
-                        localStorage.removeItem('userId');
-                    }
-                }
-            } else {
-                setUser(null);
-                setAccessTokenState("");
-                setUserId("");
-                if (typeof window !== 'undefined') {
-                    localStorage.removeItem('userId');
+                    const res = await userService.getUserProfile();
+                    setUser(res.data);
+                } catch (error) {
+                    console.error("Failed to fetch user profile", error);
+                    setAuthData("", null);
                 }
             }
             setIsLoading(false);
         };
         initAuth();
-    }, []);
+    }, [setAuthData]);
 
-    const login = (token: string, userData: any) => {
-        let decodedUserId = "";
-        try {
-            const decoded: any = jwtDecode(token);
-            decodedUserId = decoded.sub || decoded.userId || decoded._id || decoded.id || '';
-        } catch {
-            decodedUserId = "";
-        }
-        if (typeof window !== 'undefined') {
-            localStorage.setItem('accessToken', token);
-            if (decodedUserId) {
-                localStorage.setItem('userId', decodedUserId);
+    useEffect(() => {
+        const handleTokenRefresh = async () => {
+            const newToken = localStorage.getItem('accessToken');
+            if (newToken) {
+                try {
+                    const res = await userService.getUserProfile();
+                    setAuthData(newToken, res.data);
+                } catch {
+                    setAuthData("", null);
+                }
+            } else {
+                setAuthData("", null);
             }
-        }
-        setAccessTokenState(token);
-        setUser(userData);
-        setUserId(decodedUserId);
-        router.push("/");
+        };
+
+        window.addEventListener('authTokenRefreshed', handleTokenRefresh);
+        return () => window.removeEventListener('authTokenRefreshed', handleTokenRefresh);
+    }, [setAuthData]);
+
+    const login = (token: string, userData: User) => {
+        setAuthData(token, userData);
+        router.push("/todo");
     };
 
     const logout = async () => {
+        const currentId = userId;
+        setAuthData("", null);
+
         try {
-            await authService.logout(userId);
-        } catch (error) {
-            console.error(error);
-        }
-        if (typeof window !== 'undefined') {
+            if (currentId) await authService.logout();
+            window.dispatchEvent(new Event('authTokenRefreshed'));
+            // Chỉ cần 1 trong 2 dòng dưới đây, không nên dùng cả hai!
+            // window.location.href = "/login"; // Đảm bảo redirect và reload sạch sẽ
+            router.push("/login");
+            // và bỏ window.location.reload();
             localStorage.removeItem('accessToken');
-            localStorage.removeItem('userId');
+            console.log("Logout successful");
+        } catch (error) {
+            console.error("Logout error:", error);
         }
-        setAccessTokenState("");
-        setUser(null);
-        setUserId("");
-        router.push("/login");
     };
 
     return (
@@ -110,4 +117,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     );
 };
 
-export const useAuth = () => useContext(AuthContext) as AuthContextType;
+export const useAuth = () => {
+    const context = useContext(AuthContext);
+    if (!context) {
+        throw new Error("useAuth must be used within an AuthProvider");
+    }
+    return context;
+};

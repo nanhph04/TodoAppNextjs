@@ -4,21 +4,56 @@ import style from '../AuthForm.module.css';
 import { MdEmail } from "react-icons/md";
 import { RiLockPasswordFill } from "react-icons/ri";
 import InputWithIcon from '@/ui/components/Common/InputIcon/InputIcon';
-import SocialLoginRow from '@/ui/components/Common/SocialLink/SocialLink';
 import LoginButton from '@/ui/components/Common/AuthButton/AuthButton';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import GoogleButton from '@/ui/components/Common/GoogleButton/GoogleButton';
 import { authService } from '@/data/services/auth.service';
 import { syncTodos } from '@/data/services/todo.service';
 import { useAuth } from '@/logic/stores/AuthContext';
-import { useAxiosAuthSync } from '@/logic/libs/axiosClient';
+import { useRouter } from 'next/navigation';
+import { userService } from '@/data/services/user.service';
+
 export default function LoginForm() {
     const { login } = useAuth();
+    const router = useRouter();
+
     const [form, setForm] = useState({
         email: '',
         password: ''
     });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        const getCookie = (name: string) => {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop()?.split(';').shift() || '';
+            return '';
+        };
+
+        const accessToken = getCookie('accessToken');
+        if (accessToken) {
+            const handleGoogleLoginSuccess = async () => {
+                setLoading(true);
+                try {
+                    // Gọi API lấy thông tin user
+
+                    const userInfo = await userService.getUserProfile().then(r => r.data);
+                    // Đăng nhập
+                    login(accessToken, userInfo);
+                    await syncLocalTodosToServer();
+                    // router.push('/');
+                } catch (err) {
+                    console.error("Google login sync error", err);
+                    setError('Lỗi đồng bộ dữ liệu sau khi đăng nhập Google');
+                } finally {
+                    setLoading(false);
+                }
+            };
+            handleGoogleLoginSuccess();
+        }
+    }, [login, router]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setForm({ ...form, [e.target.name]: e.target.value });
@@ -33,7 +68,6 @@ export default function LoginForm() {
         const localTodos = getLocalTodos();
         if (localTodos.length > 0) {
             try {
-                console.log('Dữ liệu truyền đi syncTodos:', localTodos);
                 await syncTodos({ localTodos });
                 localStorage.removeItem('guest_todos');
             } catch (syncErr) {
@@ -59,7 +93,6 @@ export default function LoginForm() {
             if (accessToken) {
                 await syncLocalTodosToServer();
                 login(accessToken, null);
-                useAxiosAuthSync();
             } else {
                 setError('Đăng nhập thất bại, vui lòng thử lại');
             }
@@ -70,6 +103,7 @@ export default function LoginForm() {
         }
     };
 
+
     return (
         <section className={style.loginFormContainer}>
             <header className={style.loginFormHeader}>
@@ -79,12 +113,38 @@ export default function LoginForm() {
                 <InputWithIcon icon={<MdEmail />} type="email" placeholder="Enter your email" name="email" value={form.email} onChange={handleChange} />
                 <InputWithIcon icon={<RiLockPasswordFill />} type="password" placeholder="Enter your password" name="password" value={form.password} onChange={handleChange} />
                 {error && <div style={{ color: 'red', fontSize: '0.95rem', marginBottom: '0.5rem' }}>{error}</div>}
-                <LoginButton label={loading ? 'Đang đăng nhập...' : 'Login'} />
+                <LoginButton label={loading ? 'Processing...' : 'Login'} />
             </form>
             <footer className={style.loginFormFooter}>
-                <SocialLoginRow text="Or, Login with" />
+                <GoogleButton
+                    onSuccess={async (token: string) => {
+                        console.log('Google ID token nhận được:', token);
+                        setLoading(true);
+                        try {
+                            const res = await authService.loginWithGoogle(token);
+                            console.log('Response từ loginWithGoogle:', res);
+                            const { accessToken } = res.data;
+                            const userInfo = await userService.getUserProfile().then(r => r.data);
+                            login(accessToken, userInfo);
+                            // await syncLocalTodosToServer();
+                            // router.push('/todo');
+                        } catch (err) {
+                            setError('Đăng nhập Google thất bại');
+                            // Không reload hoặc chuyển trang khi lỗi
+                        } finally {
+                            setLoading(false);
+                        }
+                    }}
+                />
                 <span>Don't have an account? <Link href="/register" style={{ color: '#008BD9', fontSize: '1rem', fontWeight: '500' }}>Create one</Link></span>
             </footer>
         </section>
     );
+}
+
+export { };
+declare global {
+    interface Window {
+        google?: any;
+    }
 }

@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateTodoDto } from './dto/create-todo.dto';
 import { UpdateTodoDto } from './dto/update-todo.dto';
-import { Todo } from 'src/schemas/Todos.schema';
+import { Todo } from 'src/todos/schema/Todos.schema';
 import { Model, Types } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 
@@ -9,8 +9,15 @@ import { InjectModel } from '@nestjs/mongoose';
 export class TodosService {
   constructor(@InjectModel('Todo') private readonly todoModel: Model<Todo>) { }
 
-  async create(createTodoDto: CreateTodoDto): Promise<Todo> {
-    const newTodo = new this.todoModel(createTodoDto);
+  async create(userId: string, createTodoDto: CreateTodoDto): Promise<Todo> {
+    const anyTodo = createTodoDto as any;
+    if (anyTodo._id) {
+      delete anyTodo._id;
+    }
+    const newTodo = new this.todoModel({
+      ...createTodoDto,
+      userId,
+    });
     return await newTodo.save();
   }
 
@@ -38,15 +45,11 @@ export class TodosService {
   }
 
   async remove(id: string): Promise<Todo> {
-    console.log('mmmmm');
-    let a = 0
-    return a as any;
-
-    // const deletedTodo = await this.todoModel.findByIdAndDelete(id).exec();
-    // if (!deletedTodo) {
-    //   throw new NotFoundException('Todo not found');
-    // }
-    // return deletedTodo;
+    const deletedTodo = await this.todoModel.findByIdAndDelete(id).exec();
+    if (!deletedTodo) {
+      throw new NotFoundException('Todo not found');
+    }
+    return deletedTodo;
   }
 
   async findByUserId(userId: string, page: number, limit: number): Promise<{ data: Todo[]; total: number }> {
@@ -71,14 +74,13 @@ export class TodosService {
     const result: Todo[] = [];
 
     for (const localTodo of localTodos) {
-      // Remove _id if not a valid ObjectId
       const anyTodo = localTodo as any;
       if (anyTodo._id && !Types.ObjectId.isValid(anyTodo._id)) {
         delete anyTodo._id;
       }
       const newTodo = new this.todoModel({
         ...localTodo,
-        userId: userId, // Save as string
+        userId: userId,
         completed: localTodo.completed ?? false,
         createdAt: new Date(),
         updatedAt: new Date(),

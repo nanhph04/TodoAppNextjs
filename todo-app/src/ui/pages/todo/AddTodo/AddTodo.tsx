@@ -18,7 +18,7 @@ export default function AddTodo({ onAdded }: AddTodoProps) {
         handleChange,
         resetForm,
     } = useTodoForm();
-    const { userId } = useAuth();
+    const { user } = useAuth();
 
     const handleAddTodo = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -26,8 +26,7 @@ export default function AddTodo({ onAdded }: AddTodoProps) {
         setLoading(true);
         setError(null);
         try {
-            if (!userId) {
-                // Chỉ lưu vào localStorage nếu chưa đăng nhập
+            if (!user) {
                 const localData = localStorage.getItem('guest_todos');
                 const todos = localData ? JSON.parse(localData) : [];
                 let newId = "";
@@ -45,7 +44,6 @@ export default function AddTodo({ onAdded }: AddTodoProps) {
                 localStorage.setItem('guest_todos', JSON.stringify(todos));
             } else {
                 const payload = {
-                    userId,
                     title: form.title,
                     description: form.description,
                     priority: form.priority
@@ -54,7 +52,7 @@ export default function AddTodo({ onAdded }: AddTodoProps) {
                 await addTodoService(payload);
             }
             resetForm();
-            onAdded?.();
+            if (onAdded) onAdded();
         } catch (err: any) {
             setError(err.message || "Error");
         } finally {
