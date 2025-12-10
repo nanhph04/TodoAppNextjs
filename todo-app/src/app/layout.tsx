@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import {AuthProvider} from "@/logic/stores/AuthContext";;
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,19 +23,21 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Import AuthProvider
-  // ...existing code...
-  const AuthProvider = require("@/logic/stores/AuthContext").AuthProvider;
   return (
     <html lang="en">
+      <head>
+        <script src="https://accounts.google.com/gsi/client" async></script>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {/* <AuthProvider> */}
-        <div className="app-container">
-          {children}
-        </div>
-        {/* </AuthProvider> */}
+        <AuthProvider>
+          <div className="app-container">
+            {children}
+          </div>
+        </AuthProvider>
       </body>
     </html>
   );

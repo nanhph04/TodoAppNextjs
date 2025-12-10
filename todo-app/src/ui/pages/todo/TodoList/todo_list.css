@@ -5,10 +5,10 @@
 .todolist-list {
     min-height: 200px;
     position: relative;
-    background: #fff;
+    background: #F5F8FF;
     border-radius: 16px;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-    border: 1px solid #e5e7eb;
+    border: 1px solid rgba(161, 163, 171, 0.63);
     padding: 24px;
     margin-bottom: 24px;
     display: flex;

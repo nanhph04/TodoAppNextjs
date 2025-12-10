@@ -12,14 +12,20 @@ export class TodosController {
 
   @UseGuards(AuthGuard('jwt'))
   @Post()
-  create(@Body() createTodoDto: CreateTodoDto) {
-    return this.todosService.create(createTodoDto);
+  create(@Body() createTodoDto: CreateTodoDto, @Req() req: Request) {
+    const userId = (req.user as any)?.sub;
+    return this.todosService.create(userId, createTodoDto);
   }
 
   @UseGuards(AuthGuard('jwt'))
-  @Get()
-  findAll() {
-    return this.todosService.findAll();
+  @Get('me')
+  findMyTodos(
+    @Req() req: Request,
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+  ) {
+    const userId = (req.user as any)?.sub;
+    return this.todosService.findByUserId(userId, Number(page), Number(limit));
   }
 
   @UseGuards(AuthGuard('jwt'))
@@ -40,33 +46,6 @@ export class TodosController {
     return this.todosService.remove(id);
   }
 
-  @UseGuards(AuthGuard('jwt'))
-  @Get('me')
-  findMyTodos(@Req() req: Request) {
-    const userId = (req.user as any)?.sub;
-    return this.todosService.findByUserId(userId, 1, 10);
-  }
-
-  @UseGuards(AuthGuard('jwt'))
-  @Get('user')
-  findByUserIdPaginated(
-    @Param('userId') userId: string,
-    @Query('page') page: number,
-    @Param('limit') limit: number,
-  ) {
-    console.log(userId, page, limit);
-    return this.todosService.findByUserId(userId, page, limit);
-  }
-
-  @UseGuards(AuthGuard('jwt'))
-  @Get('user/:userId')
-  findByUserId(
-    @Param('userId') userId: string,
-    @Query('page') page = 1,
-    @Query('limit') limit = 10,
-  ) {
-    return this.todosService.findByUserId(userId, Number(page), Number(limit));
-  }
 
   @UseGuards(AuthGuard('jwt'))
   @Post('sync')

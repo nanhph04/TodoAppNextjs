@@ -7,7 +7,6 @@ import { ConfigService } from '@nestjs/config';
 import { UserModule } from './user/user.module';
 import { TodosModule } from './todos/todos.module';
 import { AuthModule } from './auth/auth.module';
-import { TestModule } from './test/test.module';
 
 @Module({
   controllers: [AppController],
@@ -28,8 +27,6 @@ import { TestModule } from './test/test.module';
     TodosModule,
 
     AuthModule,
-
-    TestModule
   ],
 })
 export class AppModule { }

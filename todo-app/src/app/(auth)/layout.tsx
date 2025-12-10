@@ -1,4 +1,3 @@
-// ...existing code...
 import style from './layout.module.css';
 import { AuthProvider } from '@/logic/stores/AuthContext';
 

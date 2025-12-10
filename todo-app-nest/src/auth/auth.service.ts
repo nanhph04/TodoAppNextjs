@@ -1,10 +1,12 @@
 import { Injectable, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { User, UserDocument } from 'src/schemas/User.schema';
-import { AuthDto } from './dto/auth.dto';
+import { User, UserDocument } from 'src/auth/schema/User.schema';
+import { RegisterDto } from './dto/register.tdo';
+import { LoginDto } from './dto/login.dto';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+import { OAuth2Client } from 'google-auth-library';
 
 @Injectable()
 export class AuthService {
@@ -13,7 +15,7 @@ export class AuthService {
         private jwtService: JwtService,
     ) { }
 
-    async register(dto: AuthDto) {
+    async register(dto: RegisterDto) {
         const hashedPassword = await bcrypt.hash(dto.password, 10);
         try {
             const newUser = await new this.userModel({
@@ -31,7 +33,7 @@ export class AuthService {
         }
     }
 
-    async login(dto: AuthDto) {
+    async login(dto: LoginDto) {
         const user = await this.userModel.findOne({ email: dto.email });
         if (!user) {
             throw new ForbiddenException('Access Denied');
@@ -47,11 +49,7 @@ export class AuthService {
     }
 
     async logout(userId: string) {
-        // Remove all token-related fields (refreshToken, accessToken if stored, etc.)
-        await this.userModel.findByIdAndUpdate(userId, {
-            refreshToken: null,
-            // If you store accessToken or other token fields, add them here
-        });
+        await this.userModel.findByIdAndUpdate(userId, { refreshToken: null });
         return true;
     }
 
@@ -78,7 +76,7 @@ export class AuthService {
         const [at, rt] = await Promise.all([
             this.jwtService.signAsync(
                 { sub: userId, email },
-                { secret: process.env.ACCESS_TOKEN_SECRET, expiresIn: 15 * 60 },
+                { secret: process.env.ACCESS_TOKEN_SECRET, expiresIn: 5 * 60 },
             ),
             this.jwtService.signAsync(
                 { sub: userId, email },
@@ -89,8 +87,47 @@ export class AuthService {
         return {
             accessToken: at,
             refreshToken: rt,
+            email: email
         };
     }
 
 
+
+    async verifyGoogleAndLogin(token: string) {
+        const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+        let ticket;
+        try {
+            ticket = await client.verifyIdToken({
+                idToken: token,
+                audience: process.env.GOOGLE_CLIENT_ID,
+            });
+        } catch (error) {
+            throw new BadRequestException('Invalid token');
+        }
+        const payload = ticket.getPayload();
+        if (!payload) {
+            throw new BadRequestException('Invalid token payload');
+        }
+        const { name, email } = payload;
+        const userFromGoogle = {
+            fullName: name,
+            email: email,
+
+        };
+        return this.loginWithGoogle(userFromGoogle);
+    }
+
+    async loginWithGoogle(userFromGoogle: any) {
+        let user = await this.userModel.findOne({ email: userFromGoogle.email });
+        if (!user) {
+            user = await new this.userModel({
+                fullName: userFromGoogle.fullName,
+                email: userFromGoogle.email,
+                // password: 'google_oauth_no_password',
+            }).save();
+        }
+        const tokens = await this.getTokens(user._id.toString(), user.email);
+        await this.updateRtHash(user._id.toString(), tokens.refreshToken);
+        return tokens;
+    }
 }

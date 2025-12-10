@@ -1,5 +1,6 @@
 .main-layout-container {
     height: 100vh;
+    background-color: #F5F8FF;
 }
 
 .main-layout-content {
@@ -10,4 +11,5 @@
 .main-layout-children {
     flex-grow: 1;
     padding: 20px;
+
 }
