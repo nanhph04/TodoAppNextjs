@@ -10,7 +10,7 @@ export default function Header() {
             </div>
             <div className="header_search">
                 <div className="search-box">
-                    <input type="text" placeholder="search" />
+                    <input type="text" placeholder="Tìm kiếm nhiệm vụ" />
                     <button><FaSearch /></button>
                 </div>
             </div>

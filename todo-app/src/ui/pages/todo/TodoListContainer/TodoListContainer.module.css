@@ -1,15 +1,37 @@
-.page-container {
-    width: 100%;
+.todolist-container {
     margin: 0 auto;
     padding: 24px 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0px 4px 8px 0 rgba(0, 0, 0, 0.3);
+}
+
+.todo-list-container-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .page-title {
-    font-size: 2.2rem;
-    font-weight: bold;
-    text-align: center;
-    margin: 24px 0 16px 0;
-    padding: 12px 0;
-    color: var(--foreground);
-    letter-spacing: 0.02em;
+    font-size: 1.5rem;
+    font-weight: 500;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.page-title p {
+    margin: 0;
+    color: #F24E1E;
+}
+
+.add-todo-btn {
+    background-color: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }

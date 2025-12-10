@@ -1,16 +1,14 @@
 "use client";
-import React from "react";
 import style from "./Sidebar.module.css";
 import Link from "next/link";
 import { useAuth } from "@/logic/stores/AuthContext";
-import { userService } from "@/data/services/user.service";
 import { usePathname } from "next/navigation";
 import { MdLogout, MdLogin } from "react-icons/md";
 
 export default function Sidebar() {
     const auth = useAuth();
     const pathname = usePathname();
-    const fullName = auth.user?.fullname || auth.user?.fullName || auth.user?.name || "Guest";
+    const fullName = auth.user?.fullName;
     const isLoggedIn = !!auth.user;
 
     const handleLogout = async () => {
