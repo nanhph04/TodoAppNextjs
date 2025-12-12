@@ -15,7 +15,7 @@ export class AuthController {
         const tokens = await this.authService.register(dto);
         res.cookie('accessToken', tokens.accessToken, { httpOnly: true });
         res.cookie('refreshToken', tokens.refreshToken, { httpOnly: true });
-        return { accessToken: tokens.accessToken, refreshToken: tokens.refreshToken, userId: tokens.email };
+        return { accessToken: tokens.accessToken, refreshToken: tokens.refreshToken, mail: tokens.email };
     }
 
     @Post('signin')
@@ -23,7 +23,7 @@ export class AuthController {
         const tokens = await this.authService.login(dto);
         res.cookie('accessToken', tokens.accessToken, { httpOnly: true });
         res.cookie('refreshToken', tokens.refreshToken, { httpOnly: true });
-        return { accessToken: tokens.accessToken, refreshToken: tokens.refreshToken, userId: tokens.email };
+        return { accessToken: tokens.accessToken, refreshToken: tokens.refreshToken, mail: tokens.email };
     }
 
 

@@ -64,8 +64,6 @@ axiosClient.interceptors.response.use(
             isRefreshing = true;
 
             try {
-                // QUAN TRỌNG: Dùng axios gốc (không phải axiosClient) để tránh vòng lặp interceptor
-                // Hoặc tạo một instance riêng chỉ cho auth
                 const res = await axios.post(
                     `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003'}/auth/refresh`,
                     {},
@@ -96,8 +94,8 @@ axiosClient.interceptors.response.use(
 
                 if (typeof window !== 'undefined') {
                     localStorage.removeItem('accessToken');
-                    localStorage.removeItem('userId');
-                    window.location.href = '/login'; // Redirect cứng
+                    // localStorage.removeItem('userId');
+                    window.location.href = '/login';
                 }
                 return Promise.reject(refreshError);
             } finally {

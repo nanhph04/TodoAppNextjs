@@ -1,5 +1,5 @@
 "use client";
-import { useAuth } from '@/logic/stores/AuthContext';
+import { useAuth } from '@/logic/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
@@ -19,15 +19,16 @@ export default function ProfilePage() {
     if (!auth.user) {
         return null;
     }
-    const { user, logout } = auth;
+    const { user, role, logout } = auth;
     return (
 
         <div>
             <h1>User Profile</h1>
             <h2>Fullname: {user.fullName || "Không có tên"}</h2>
             <h2>Email: {user.email || "Không có email"}</h2>
+            <h2>Role: {role || "Không có vai trò"}</h2>
             <button onClick={logout}>Log out</button>
-        </div>
+        </div >
 
     );
 }

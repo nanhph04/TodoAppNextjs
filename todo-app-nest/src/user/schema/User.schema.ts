@@ -14,8 +14,20 @@ export class User {
     @Prop()
     password: string;
 
+    @Prop({ type: String, default: null })
+    refreshToken: string | null;
+
+    @Prop({ type: String, enum: ['user', 'admin'], default: 'user' })
+    role: string;
+
     @Prop()
-    refreshToken: string;
+    avatar: string;
+
+    @Prop()
+    address: string;
+
+    @Prop()
+    phoneNumber?: string;
 
 
 }

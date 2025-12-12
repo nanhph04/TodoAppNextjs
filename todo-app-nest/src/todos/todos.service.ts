@@ -2,31 +2,26 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateTodoDto } from './dto/create-todo.dto';
 import { UpdateTodoDto } from './dto/update-todo.dto';
 import { Todo } from 'src/todos/schema/Todos.schema';
-import { Model, Types } from 'mongoose';
-import { InjectModel } from '@nestjs/mongoose';
+import { Types } from 'mongoose';
+import { TodosRepository } from './todos.repository';
 
 @Injectable()
 export class TodosService {
-  constructor(@InjectModel('Todo') private readonly todoModel: Model<Todo>) { }
+  constructor(
+    private readonly todosRepository: TodosRepository
+  ) { }
 
   async create(userId: string, createTodoDto: CreateTodoDto): Promise<Todo> {
-    const anyTodo = createTodoDto as any;
-    if (anyTodo._id) {
-      delete anyTodo._id;
-    }
-    const newTodo = new this.todoModel({
-      ...createTodoDto,
+    const { _id, ...rest } = createTodoDto as any;
+    const newTodo = await this.todosRepository.create({
+      ...rest,
       userId,
     });
-    return await newTodo.save();
-  }
-
-  async findAll(): Promise<Todo[]> {
-    return await this.todoModel.find().exec();
+    return newTodo;
   }
 
   async findOne(id: string): Promise<Todo> {
-    const todo = await this.todoModel.findById(id).exec();
+    const todo = await this.todosRepository.findById(id);
     if (!todo) {
       throw new Error('Todo not found');
     }
@@ -35,9 +30,10 @@ export class TodosService {
 
   async update(id: string, updateTodoDto: UpdateTodoDto): Promise<Todo> {
     if (!Types.ObjectId.isValid(id)) throw new NotFoundException('Invalid ID format');
-    const updatedTodo = await this.todoModel
-      .findByIdAndUpdate(id, updateTodoDto, { new: true })
-      .exec();
+    let updateData: any = { ...updateTodoDto };
+    delete updateData.userId;
+    delete updateData._id;
+    const updatedTodo = await this.todosRepository.update(id, updateData);
     if (!updatedTodo) {
       throw new NotFoundException('Todo not found');
     }
@@ -45,7 +41,7 @@ export class TodosService {
   }
 
   async remove(id: string): Promise<Todo> {
-    const deletedTodo = await this.todoModel.findByIdAndDelete(id).exec();
+    const deletedTodo = await this.todosRepository.delete(id);
     if (!deletedTodo) {
       throw new NotFoundException('Todo not found');
     }
@@ -56,39 +52,28 @@ export class TodosService {
     if (!userId) {
       return { data: [], total: 0 };
     }
-    const filter = { userId: userId };
     const [data, total] = await Promise.all([
-      this.todoModel.find(filter)
-        .skip((page - 1) * limit)
-        .limit(limit)
-        .exec(),
-      this.todoModel.countDocuments(filter)
+      this.todosRepository.findByUserId(userId, page, limit).then(res => res.data),
+      this.todosRepository.findByUserId(userId, page, limit).then(res => res.total)
     ]);
     return { data, total };
   }
 
-  async syncTodos(userId: string, localTodos: CreateTodoDto[]): Promise<Todo[]> {
-    if (!userId) {
-      throw new NotFoundException('Invalid User ID');
-    }
-    const result: Todo[] = [];
+  async findAll(page: number, limit: number): Promise<{ data: Todo[]; total: number }> {
+    return this.todosRepository.findAll(page, limit);
+  }
 
-    for (const localTodo of localTodos) {
-      const anyTodo = localTodo as any;
-      if (anyTodo._id && !Types.ObjectId.isValid(anyTodo._id)) {
-        delete anyTodo._id;
-      }
-      const newTodo = new this.todoModel({
-        ...localTodo,
-        userId: userId,
-        completed: localTodo.completed ?? false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-      await newTodo.save();
-      result.push(newTodo);
+  async countCompletedTodos(userId: string, isAdmin: boolean): Promise<{ completed: number; notCompleted: number; total: number }> {
+    const filter: any = {};
+    if (!isAdmin) {
+      filter.userId = userId;
     }
-    return result;
+    const [completed, notCompleted, total] = await Promise.all([
+      this.todosRepository.countByFilter({ ...filter, completed: true }),
+      this.todosRepository.countByFilter({ ...filter, completed: false }),
+      this.todosRepository.countByFilter(filter)
+    ]);
+    return { completed, notCompleted, total };
   }
 
 }

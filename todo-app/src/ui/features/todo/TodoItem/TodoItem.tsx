@@ -1,7 +1,7 @@
 "use client";
 import styles from "./TodoItem.module.css";
 import React from "react";
-import { Todo } from "../../../../data/types/todos";
+import { Todo } from "@/data/interfaces/todos";
 
 interface TodoItemProps {
     todo: Todo;
@@ -18,7 +18,11 @@ export default function TodoItem({ todo, onDelete, onToggleComplete }: TodoItemP
         setLoading(true);
         setError(null);
         try {
-            await onDelete(todo._id);
+            if (todo._id) {
+                await onDelete(todo._id);
+            } else {
+                throw new Error("Todo ID is missing");
+            }
         } catch (err: any) {
             setError(err.message || "Error");
         } finally {
@@ -30,7 +34,11 @@ export default function TodoItem({ todo, onDelete, onToggleComplete }: TodoItemP
         setToggleLoading(true);
         setError(null);
         try {
-            await onToggleComplete(todo._id);
+            if (todo._id) {
+                await onToggleComplete(todo._id);
+            } else {
+                throw new Error("Todo ID is missing");
+            }
         } catch (err: any) {
             setError(err.message || "Error");
         } finally {
@@ -55,7 +63,7 @@ export default function TodoItem({ todo, onDelete, onToggleComplete }: TodoItemP
                 <p>Status: <span
                     className={todo.completed ? styles["status-completed"] : styles["status-pending"]}
                 >{todo.completed ? "Completed" : "Pending"}</span></p>
-                <p>Created at: <span className={styles["todo-createdAt"]}>{new Date(todo.createdAt).toLocaleDateString()}</span></p>
+                <p>Created at: <span className={styles["todo-createdAt"]}>{todo.createdAt ? new Date(todo.createdAt).toLocaleDateString() : "N/A"}</span></p>
                 {todo.completed && todo.completedAt && (
                     <p>Completed at: <span className={styles["todo-completedAt"]}>{new Date(todo.completedAt).toLocaleDateString()}</span></p>
                 )}

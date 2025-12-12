@@ -8,8 +8,7 @@ import LoginButton from '@/ui/components/Common/AuthButton/AuthButton';
 import { useState, useEffect } from 'react';
 import GoogleButton from '@/ui/components/Common/GoogleButton/GoogleButton';
 import { authService } from '@/data/services/auth.service';
-import { syncTodos } from '@/data/services/todo.service';
-import { useAuth } from '@/logic/stores/AuthContext';
+import { useAuth } from '@/logic/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { userService } from '@/data/services/user.service';
 
@@ -24,57 +23,13 @@ export default function LoginForm() {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-        const getCookie = (name: string) => {
-            const value = `; ${document.cookie}`;
-            const parts = value.split(`; ${name}=`);
-            if (parts.length === 2) return parts.pop()?.split(';').shift() || '';
-            return '';
-        };
 
-        const accessToken = getCookie('accessToken');
-        if (accessToken) {
-            const handleGoogleLoginSuccess = async () => {
-                setLoading(true);
-                try {
-                    // Gọi API lấy thông tin user
-
-                    const userInfo = await userService.getUserProfile().then(r => r.data);
-                    // Đăng nhập
-                    login(accessToken, userInfo);
-                    await syncLocalTodosToServer();
-                    // router.push('/');
-                } catch (err) {
-                    console.error("Google login sync error", err);
-                    setError('Lỗi đồng bộ dữ liệu sau khi đăng nhập Google');
-                } finally {
-                    setLoading(false);
-                }
-            };
-            handleGoogleLoginSuccess();
-        }
-    }, [login, router]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setForm({ ...form, [e.target.name]: e.target.value });
     };
 
-    const getLocalTodos = () => {
-        const localData = localStorage.getItem('guest_todos');
-        return localData ? JSON.parse(localData) : [];
-    };
 
-    const syncLocalTodosToServer = async () => {
-        const localTodos = getLocalTodos();
-        if (localTodos.length > 0) {
-            try {
-                await syncTodos({ localTodos });
-                localStorage.removeItem('guest_todos');
-            } catch (syncErr) {
-                console.error('Error syncing local todos:', syncErr);
-            }
-        }
-    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -91,7 +46,6 @@ export default function LoginForm() {
             });
             const { accessToken } = res.data;
             if (accessToken) {
-                await syncLocalTodosToServer();
                 login(accessToken, null);
             } else {
                 setError('Đăng nhập thất bại, vui lòng thử lại');
@@ -126,11 +80,9 @@ export default function LoginForm() {
                             const { accessToken } = res.data;
                             const userInfo = await userService.getUserProfile().then(r => r.data);
                             login(accessToken, userInfo);
-                            // await syncLocalTodosToServer();
-                            // router.push('/todo');
+
                         } catch (err) {
                             setError('Đăng nhập Google thất bại');
-                            // Không reload hoặc chuyển trang khi lỗi
                         } finally {
                             setLoading(false);
                         }

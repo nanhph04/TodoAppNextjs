@@ -1,3 +1,4 @@
+
 import { Controller, Get, Req, Post, Body, Patch, Param, Delete, Query, Put } from '@nestjs/common';
 import type { Request } from 'express';
 import { TodosService } from './todos.service';
@@ -5,12 +6,17 @@ import { CreateTodoDto } from './dto/create-todo.dto';
 import { UpdateTodoDto } from './dto/update-todo.dto';
 import { UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { Roles } from 'src/role/roles.decorator';
+import { Role } from 'src/role/role.enum';
+import { RolesGuard } from 'src/role/roles.guard';
 
 @Controller('api/todos')
 export class TodosController {
   constructor(private readonly todosService: TodosService) { }
 
+
   @UseGuards(AuthGuard('jwt'))
+  @Roles(Role.USER)
   @Post()
   create(@Body() createTodoDto: CreateTodoDto, @Req() req: Request) {
     const userId = (req.user as any)?.sub;
@@ -26,6 +32,15 @@ export class TodosController {
   ) {
     const userId = (req.user as any)?.sub;
     return this.todosService.findByUserId(userId, Number(page), Number(limit));
+  }
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('count-status')
+  async countStatus(@Req() req: Request) {
+    const userId = (req.user as any)?.sub;
+    const role = (req.user as any)?.role;
+    const isAdmin = role === 'admin';
+    return this.todosService.countCompletedTodos(userId, isAdmin);
   }
 
   @UseGuards(AuthGuard('jwt'))
@@ -46,16 +61,15 @@ export class TodosController {
     return this.todosService.remove(id);
   }
 
-
-  @UseGuards(AuthGuard('jwt'))
-  @Post('sync')
-  syncTodos(
-    @Req() req: Request,
-    @Body() body: { localTodos: CreateTodoDto[] },
+  @Get()
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles(Role.ADMIN)
+  findAll(
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
   ) {
-    const userId = (req.user as any)?.sub;
-    const localTodos = body.localTodos;
-    return this.todosService.syncTodos(userId, localTodos);
+    return this.todosService.findAll(Number(page), Number(limit));
   }
+
 
 }

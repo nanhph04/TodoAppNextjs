@@ -2,8 +2,8 @@
 import React from "react";
 import style from "./AddTodo.module.css";
 import { useTodoForm } from "@/logic/hooks/useTodoForm";
-import { useAuth } from "@/logic/stores/AuthContext";
-import { addTodo as addTodoService } from "@/data/services/todo.service";
+import { useAuth } from "@/logic/hooks/useAuth";
+import { todoService } from "@/data/services/todo.service";
 
 interface AddTodoProps {
     onAdded?: () => void;
@@ -18,7 +18,7 @@ export default function AddTodo({ onAdded }: AddTodoProps) {
         handleChange,
         resetForm,
     } = useTodoForm();
-    const { user } = useAuth();
+    // const { user } = useAuth();
 
     const handleAddTodo = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -26,31 +26,13 @@ export default function AddTodo({ onAdded }: AddTodoProps) {
         setLoading(true);
         setError(null);
         try {
-            if (!user) {
-                const localData = localStorage.getItem('guest_todos');
-                const todos = localData ? JSON.parse(localData) : [];
-                let newId = "";
-                if (typeof crypto !== "undefined" && crypto.randomUUID) {
-                    newId = crypto.randomUUID();
-                } else {
-                    newId = Date.now().toString() + Math.random().toString(36).slice(2);
-                }
-                todos.push({
-                    ...form,
-                    _id: newId,
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString()
-                });
-                localStorage.setItem('guest_todos', JSON.stringify(todos));
-            } else {
-                const payload = {
-                    title: form.title,
-                    description: form.description,
-                    priority: form.priority
-                };
-                console.log("Payload gửi đi addTodoService:", payload);
-                await addTodoService(payload);
-            }
+            const payload = {
+                title: form.title,
+                description: form.description,
+                priority: form.priority
+            };
+            console.log("Payload gửi đi addTodoService:", payload);
+            await todoService.addTodo(payload);
             resetForm();
             if (onAdded) onAdded();
         } catch (err: any) {

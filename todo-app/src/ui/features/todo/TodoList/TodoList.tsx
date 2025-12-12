@@ -1,9 +1,8 @@
 "use client";
 import React from "react";
-import TodoItem from "@/ui/pages/todo/TodoItem/TodoItem";
+import TodoItem from "@/ui/features/todo/TodoItem/TodoItem";
 import { Todo } from "@/data/interfaces/todos";
-import { getTodos, deleteTodo as deleteTodoService, updateTodoStatus } from "@/data/services/todo.service";
-import { useAuth } from "@/logic/stores/AuthContext";
+import { todoService } from "@/data/services/todo.service";
 import "./todo_list.css";
 import Button from "@/ui/components/Common/Button/Button.base";
 
@@ -11,75 +10,46 @@ interface TodoListProps {
     todos: Todo[];
     page?: number;
     totalPages?: number;
+    onPageChange?: (page: number) => void;
 }
 
-const LOCAL_KEY = "guest_todos";
-
-export default function TodoList({ todos: initialTodos, page, totalPages }: TodoListProps) {
-    const { userId } = useAuth();
+export default function TodoList({ todos: initialTodos, page, totalPages, onPageChange }: TodoListProps) {
     const [todos, setTodos] = React.useState<Todo[]>(initialTodos);
     const currentPage = typeof page === "number" ? page : 1;
     const totalPageCount = typeof totalPages === "number" ? totalPages : 1;
-    const pageSize = 5;
-
-    const getLocalTodos = () => {
-        try {
-            const raw = localStorage.getItem(LOCAL_KEY);
-            return raw ? JSON.parse(raw) : [];
-        } catch {
-            return [];
-        }
-    };
-    const setLocalTodos = (newTodos: Todo[]) => {
-        localStorage.setItem(LOCAL_KEY, JSON.stringify(newTodos));
-    };
+    const pageSize = 3;
 
     const deleteTodo = async (id: string) => {
-        if (userId) {
-            try {
-                await deleteTodoService(id);
-                await getTodos(currentPage, pageSize).then((data) => {
-                    setTodos(data.data || []);
-                });
-            } catch (err) {
-                alert("Delete failed");
-            }
-        } else {
-            const updated = todos.filter(todo => todo._id !== id);
-            setTodos(updated);
-            setLocalTodos(updated);
+        try {
+            await todoService.deleteTodo(id);
+            await todoService.getTodos(currentPage, pageSize).then((data) => {
+                setTodos(data.data || []);
+            });
+        } catch (err) {
+            alert("Delete failed");
         }
     };
 
     const updateStatus = async (id: string, completed: boolean) => {
-        if (userId) {
-            try {
-                await updateTodoStatus(id, completed);
-                await getTodos(currentPage, pageSize).then((data) => {
-                    setTodos(data.data || []);
-                });
-            } catch (err) {
-                alert("Update failed");
-            }
-        } else {
-            setTodos((prev) => {
-                const updated = prev.map(todo => todo._id === id ? { ...todo, completed, completedAt: completed ? new Date().toISOString() : undefined } : todo);
-                setLocalTodos(updated);
-                return updated;
+        try {
+            await todoService.updateTodo(id, { completed });
+            await todoService.getTodos(currentPage, pageSize).then((data) => {
+                setTodos(data.data || []);
             });
+        } catch (err) {
+            alert("Update failed");
         }
     };
 
     const handlePageChange = (newPage: number) => {
-        window.location.href = `/?page=${newPage}&limit=5`;
+        if (onPageChange) {
+            onPageChange(newPage);
+        }
     };
 
     React.useEffect(() => {
-        if (!userId) {
-            setTodos(getLocalTodos());
-        }
         setTodos(initialTodos);
-    }, [userId, initialTodos]);
+    }, [initialTodos]);
 
     return (
         <div className="todolist-container">
@@ -105,16 +75,14 @@ export default function TodoList({ todos: initialTodos, page, totalPages }: Todo
                     disabled={currentPage === 1}
                     className="todolist-btn todolist-btn-prev"
                     title="← Previous"
-                >
-                </Button>
+                />
                 <span className="todolist-pageinfo">Page {currentPage} / {totalPageCount}</span>
                 <Button
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPageCount}
                     className="todolist-btn todolist-btn-next"
                     title="  Next →"
-                >
-                </Button>
+                />
             </div>
         </div>
     );

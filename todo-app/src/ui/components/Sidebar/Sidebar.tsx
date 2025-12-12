@@ -1,7 +1,7 @@
 "use client";
 import style from "./Sidebar.module.css";
 import Link from "next/link";
-import { useAuth } from "@/logic/stores/AuthContext";
+import { useAuth } from "@/logic/hooks/useAuth";
 import { usePathname } from "next/navigation";
 import { MdLogout, MdLogin } from "react-icons/md";
 
@@ -22,7 +22,9 @@ export default function Sidebar() {
             </div>
             <div>
                 <div className={style.menu}>
-                    <Link href="/" className={`${style["menu-item"]} ${pathname === "/" ? style["active"] : ""}`}>Dashboard</Link>
+                    {auth.role === "admin" && (
+                        <Link href="/users" className={`${style["menu-item"]} ${pathname === "/users" ? style["active"] : ""}`}>Users</Link>
+                    )}
                     <Link href="/todo" className={`${style["menu-item"]} ${pathname.startsWith("/todo") ? style["active"] : ""}`}>Tasks</Link>
                     {isLoggedIn && (
                         <Link href="/profile" className={`${style["menu-item"]} ${pathname.startsWith("/profile") ? style["active"] : ""}`}>Profile</Link>

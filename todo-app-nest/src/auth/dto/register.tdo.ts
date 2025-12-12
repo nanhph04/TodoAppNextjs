@@ -10,4 +10,8 @@ export class RegisterDto {
 
     @IsNotEmpty()
     password: string;
+
+    // @IsNotEmpty()
+    // role: 'user' | 'admin';
+
 }

@@ -1,53 +1,44 @@
-/* Container để căn giữa text */
-.progress-circle {
+/* Container tổng: Sắp xếp các phần tử theo chiều dọc */
+.progress-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: fit-content;
+    margin: 0 auto;
+}
+
+
+.circle-box {
     position: relative;
-    width: 120px;
-    height: 120px;
-    text-align: center;
 }
 
-/* SVG xoay -90 độ để bắt đầu từ 12 giờ */
-.progress-circle svg {
+.circle-box svg {
     transform: rotate(-90deg);
-    width: 100%;
-    height: 100%;
+    display: block;
 }
 
-.progress-circle circle {
+.circle-box circle {
     fill: none;
-    stroke-width: 10;
-    /* Độ dày của viền */
+    transition: stroke-dashoffset 1s ease-in-out;
 }
 
-/* Vòng tròn nền (màu xám) */
 .bg {
     stroke: #e6e6e6;
 }
 
-/* Vòng tròn tiến độ (màu xanh/đỏ...) */
 .progress {
-    stroke: #00ba00;
-    /* Màu xanh lá như hình */
     stroke-linecap: round;
-    /* Bo tròn đầu (tùy chọn) */
-    /* Công thức tính chu vi (C = 2 * pi * r). 
-       Ở đây r = 54 (cx - stroke-width/2) => C ≈ 339.29 
-    */
-    stroke-dasharray: 339.292;
-    stroke-dashoffset: 339.292;
-    /* Mặc định ẩn hết */
-    transition: stroke-dashoffset 1s ease-in-out;
 }
 
-/* Text ở giữa */
 .text {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     font-family: sans-serif;
-    font-size: 24px;
     font-weight: bold;
+    color: #333;
+    line-height: 1;
 }
 
 .progressTitle {
@@ -56,5 +47,6 @@
     justify-content: center;
     font-size: 16px;
     font-weight: 500;
-    margin-top: 8px;
+    margin-top: 16px;
+    font-family: sans-serif;
 }

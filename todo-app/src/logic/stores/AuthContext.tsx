@@ -11,12 +11,13 @@ interface AuthContextType {
     user: User | null;
     accessToken: string;
     userId: string;
+    role: string;
     login: (token: string, userData: any) => void;
     logout: () => void;
     isLoading: boolean;
 }
 
-const AuthContext = createContext<AuthContextType | null>(null);
+export const AuthContext = createContext<AuthContextType | null>(null);
 
 const getUserIdFromToken = (token: string): string => {
     try {
@@ -27,18 +28,30 @@ const getUserIdFromToken = (token: string): string => {
     }
 }
 
+const getRoleFromToken = (token: string): string => {
+    try {
+        const decoded: any = jwtDecode(token);
+        return decoded.role || "";
+    } catch {
+        return "";
+    }
+}
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
     const [accessToken, setAccessTokenState] = useState<string>("");
     const [userId, setUserId] = useState<string>("");
     const [isLoading, setIsLoading] = useState(true);
+    const [role, setRole] = useState<string>("");
     const router = useRouter();
 
     const setAuthData = useCallback((token: string, userData: User | null) => {
-        const id = token ? getUserIdFromToken(token) : "";
+        const userId = getUserIdFromToken(token);
+        const role = getRoleFromToken(token);
         setAccessTokenState(token);
         setUser(userData);
-        setUserId(id);
+        setUserId(userId);
+        setRole(role);
 
         if (typeof window !== 'undefined') {
             if (token) {
@@ -55,6 +68,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             if (storedToken) {
                 setAccessTokenState(storedToken);
                 setUserId(getUserIdFromToken(storedToken));
+                setRole(getRoleFromToken(storedToken));
                 try {
                     const res = await userService.getUserProfile();
                     setUser(res.data);
@@ -75,11 +89,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 try {
                     const res = await userService.getUserProfile();
                     setAuthData(newToken, res.data);
+                    setRole(res.data?.role || "");
                 } catch {
                     setAuthData("", null);
+                    setRole("");
                 }
             } else {
                 setAuthData("", null);
+                setRole("");
             }
         };
 
@@ -99,28 +116,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         try {
             if (currentId) await authService.logout();
             window.dispatchEvent(new Event('authTokenRefreshed'));
-            // Chỉ cần 1 trong 2 dòng dưới đây, không nên dùng cả hai!
-            // window.location.href = "/login"; // Đảm bảo redirect và reload sạch sẽ
-            router.push("/login");
-            // và bỏ window.location.reload();
             localStorage.removeItem('accessToken');
             console.log("Logout successful");
+            window.location.href = "/login";
         } catch (error) {
             console.error("Logout error:", error);
+            window.location.href = "/login";
         }
     };
 
     return (
-        <AuthContext.Provider value={{ user, accessToken, userId, login, logout, isLoading }}>
+        <AuthContext.Provider value={{ user, accessToken, userId, role, login, logout, isLoading }}>
             {children}
         </AuthContext.Provider>
     );
 };
 
-export const useAuth = () => {
-    const context = useContext(AuthContext);
-    if (!context) {
-        throw new Error("useAuth must be used within an AuthProvider");
-    }
-    return context;
-};

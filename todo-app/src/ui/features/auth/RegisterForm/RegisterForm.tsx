@@ -9,7 +9,7 @@ import LoginButton from '@/ui/components/Common/AuthButton/AuthButton';
 import { FaUserPen } from "react-icons/fa6";
 import { useState } from 'react';
 import { authService } from '@/data/services/auth.service';
-import { useAuth } from '@/logic/stores/AuthContext';
+import { useAuth } from '@/logic/hooks/useAuth';
 export default function RegisterForm() {
     const { login } = useAuth();
     const [form, setForm] = useState({
@@ -38,7 +38,7 @@ export default function RegisterForm() {
                 email: form.email,
                 password: form.password
             });
-            // Nếu backend trả về accessToken và user
+            // Nếu backend trả về accessToken và user, tự động đăng nhập
             const { accessToken } = res.data;
             if (accessToken) {
                 login(accessToken, null);
