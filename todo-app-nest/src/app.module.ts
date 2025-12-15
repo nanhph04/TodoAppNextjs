@@ -7,10 +7,13 @@ import { ConfigService } from '@nestjs/config';
 import { UserModule } from './user/user.module';
 import { TodosModule } from './todos/todos.module';
 import { AuthModule } from './auth/auth.module';
+import { MailService } from './mail/mail.service';
+import { RolesModule } from './roles/roles.module';
+import { PermissionModule } from './permission/permission.module';
 
 @Module({
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, MailService],
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
@@ -27,6 +30,11 @@ import { AuthModule } from './auth/auth.module';
     TodosModule,
 
     AuthModule,
+
+    RolesModule,
+
+    PermissionModule,
+
   ],
 })
 export class AppModule { }

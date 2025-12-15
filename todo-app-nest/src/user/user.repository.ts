@@ -1,7 +1,10 @@
+
+
 import { Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { User, UserDocument } from "./schema/User.schema";
 import { Model } from "mongoose";
+import { Types } from "mongoose";
 
 @Injectable()
 export class UserRepository {
@@ -34,6 +37,21 @@ export class UserRepository {
 
     async delete(userId: string): Promise<UserDocument | null> {
         return this.userModel.findByIdAndDelete(userId).exec();
+    }
+
+    async getUserPermissions(userId: Types.ObjectId) {
+        return this.userModel
+            .findById(userId)
+            .select('roles')
+            .populate({
+                path: 'roles',
+                select: 'permissions',
+                populate: {
+                    path: 'permissions',
+                    select: 'slug',
+                },
+            })
+            .exec();
     }
 
 

@@ -1,23 +1,24 @@
-import { IsBoolean, IsMongoId, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsEnum, IsMongoId, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { TodoStatus } from '../schema/Todos.schema';
 
 export class CreateTodoDto {
-    @IsOptional()
-    @IsMongoId()
-    userId?: string;
-
-    @IsNotEmpty()
-    @IsString()
+    @IsNotEmpty({ message: 'Tiêu đề không được để trống' })
     title: string;
 
-    @IsString()
     @IsOptional()
+    @IsString()
     description?: string;
 
     @IsOptional()
-    @IsBoolean()
-    completed?: boolean = false;
+    @IsEnum(TodoStatus)
+    status?: TodoStatus;
+
+    // Acc 1 không gửi field này (Backend tự gán).
+    // Acc 3 (Admin) có thể gửi field này để giao việc cho người khác.
+    @IsOptional()
+    assignee?: string;
 
     @IsOptional()
-    @IsString()
+    @IsEnum(['low', 'medium', 'high'], { message: 'Priority phải là low, medium hoặc high' })
     priority?: 'low' | 'medium' | 'high';
 }

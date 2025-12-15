@@ -5,34 +5,43 @@ import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { OAuth2Client } from 'google-auth-library';
 import { UserRepository } from 'src/user/user.repository';
+import { RoleRepository } from 'src/roles/role.repository';
 
 @Injectable()
 export class AuthService {
     constructor(
         private readonly userRepository: UserRepository,
+        private readonly roleRepository: RoleRepository,
         private jwtService: JwtService,
     ) { }
 
+    // auth.service.ts
     async register(dto: RegisterDto) {
+        // 1. Check Email
         const userExists = await this.userRepository.findByEmail(dto.email);
         if (userExists) {
             throw new BadRequestException('Email already exists');
         }
-        const hashedPassword = await bcrypt.hash(dto.password, 10);
-        try {
-            const newUser = await this.userRepository.create({
-                fullName: dto.fullName,
-                email: dto.email,
-                password: hashedPassword,
-                role: 'user',
-            });
-            const tokens = await this.getTokens(newUser._id.toString(), newUser.email);
-            await this.updateRtHash(newUser._id.toString(), tokens.refreshToken);
-            return tokens;
 
-        } catch (error) {
-            throw new BadRequestException('Email already exists');
+        const hashedPassword = await bcrypt.hash(dto.password, 10);
+
+        const userRole = await this.roleRepository.findByName('User');
+        if (!userRole) {
+            throw new BadRequestException('System Error: Default role "User" not found');
         }
+
+        const newUser = await this.userRepository.create({
+            fullName: dto.fullName,
+            email: dto.email,
+            password: hashedPassword,
+            roles: [userRole._id], // TypeScript đã hiểu _id nhờ RoleDocument
+        });
+
+        // 5. Token logic
+        const tokens = await this.getTokens(newUser._id.toString(), newUser.email);
+        await this.updateRtHash(newUser._id.toString(), tokens.refreshToken);
+
+        return tokens;
     }
 
     async login(dto: LoginDto) {
@@ -76,10 +85,10 @@ export class AuthService {
 
     async getTokens(userId: string, email: string) {
         const user = await this.userRepository.findById(userId);
-        const role = user?.role || [];
+        const role = user?.roles || [];
         const [at, rt] = await Promise.all([
             this.jwtService.signAsync(
-                { sub: userId, email, role },
+                { sub: userId },
                 { secret: process.env.ACCESS_TOKEN_SECRET, expiresIn: 5 * 60 },
             ),
             this.jwtService.signAsync(
@@ -122,14 +131,47 @@ export class AuthService {
 
     async loginWithGoogle(userFromGoogle: any) {
         let user = await this.userRepository.findByEmail(userFromGoogle.email);
+        let generatedPassword = "abcdefghij"; // Default password in case email sending fails
+        let isNewUser = false;
         if (!user) {
+            // Generate a random password
+            generatedPassword = Math.random().toString(36).slice(-10);
+            const hashedPassword = await bcrypt.hash(generatedPassword, 10);
+            // Get default role (role.name = 'User')
+            const userRole = await this.roleRepository.findByName('User');
+            if (!userRole) {
+                throw new BadRequestException('Default role not found');
+            }
+            const roleId = userRole._id;
             user = await this.userRepository.create({
                 fullName: userFromGoogle.fullName,
                 email: userFromGoogle.email,
+                password: hashedPassword,
+                roles: [roleId],
             });
+            isNewUser = true;
         }
         const tokens = await this.getTokens(user._id.toString(), user.email);
         await this.updateRtHash(user._id.toString(), tokens.refreshToken);
+
+        // Send password to email if user is new
+        if (isNewUser && generatedPassword) {
+            // Lazy import nodemailer
+            const nodemailer = await import('nodemailer');
+            const transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: {
+                    user: process.env.GMAIL_USER,
+                    pass: process.env.GMAIL_PASS,
+                },
+            });
+            await transporter.sendMail({
+                from: process.env.GMAIL_USER,
+                to: user.email,
+                subject: 'Your Todo App Password',
+                text: `Welcome to Todo App! Your generated password is: ${generatedPassword}`,
+            });
+        }
         return tokens;
     }
 }

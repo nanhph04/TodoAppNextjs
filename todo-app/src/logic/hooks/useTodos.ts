@@ -7,18 +7,13 @@ export function useTodos(currentPage: number) {
     const [totalPages, setTotalPages] = useState(1);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-    const { user, role } = useAuth();
+    const { user } = useAuth();
     const pageSize = 3;
 
     const refreshTodos = () => {
         setLoading(true);
-        const userRole = role;
-        const apiCall = userRole === 'admin'
-            ? todoService.getAllTodos(currentPage, pageSize)
-            : todoService.getTodos(currentPage, pageSize);
-        Promise.resolve(apiCall)
+        todoService.getAllTodos(currentPage, pageSize)
             .then((data) => {
-                console.log('role:', role, 'data:', data);
                 setTodos(data.data || []);
                 setTotalPages(Math.ceil((data.total || 0) / pageSize));
                 setError("");

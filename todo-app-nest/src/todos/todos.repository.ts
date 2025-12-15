@@ -40,7 +40,10 @@ export class TodosRepository {
     }
 
     async findByUserId(userId: string, page: number, limit: number): Promise<{ data: TodoDocument[]; total: number }> {
-        const filter = { userId: userId };
+        // Convert userId sang ObjectId để so sánh đúng với DB
+        const { Types } = await import('mongoose');
+        const userObjId = new Types.ObjectId(userId);
+        const filter = { $or: [{ assignee: userObjId }, { createdBy: userObjId }] };
         const [data, total] = await Promise.all([
             this.todoModel.find(filter)
                 .skip((page - 1) * limit)

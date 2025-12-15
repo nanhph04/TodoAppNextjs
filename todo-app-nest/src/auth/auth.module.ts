@@ -8,12 +8,16 @@ import { JwtModule } from '@nestjs/jwt';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { GoogleStrategy } from './strategies/google.strategy';
+import { PermissionModule } from 'src/permission/permission.module';
+import { RolesModule } from 'src/roles/roles.module';
 
 
 @Module({
     imports: [
         MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
         JwtModule.register({}),
+        RolesModule,
+        PermissionModule
     ],
     controllers: [AuthController],
     providers: [AccessTokenStrategy, RefreshTokenStrategy, AuthService, GoogleStrategy, UserRepository],

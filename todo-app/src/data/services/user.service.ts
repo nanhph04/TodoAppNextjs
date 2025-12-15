@@ -6,5 +6,13 @@ export const userService = {
 
     deleteUser: (id: string) => axiosClient.delete(`/user/${id}`),
 
+    updateUser: (id: string, data: any) => axiosClient.put(`/user/${id}`, data),
+
+    getUserById: (id: string) => axiosClient.get(`/user/${id}`),
+
+    getUserPermissions: () => axiosClient.get(`/user/permissions`),
+
+    getUserByEmail: (email: string) => axiosClient.get(`/user/by-email?email=${email}`),
+
     // updateUser: (id: string, data: any) => axiosClient.put(`/user/${id}`, data),
 };

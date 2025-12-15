@@ -1,14 +1,17 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import style from "./AddTodo.module.css";
 import { useTodoForm } from "@/logic/hooks/useTodoForm";
 import { useAuth } from "@/logic/hooks/useAuth";
 import { todoService } from "@/data/services/todo.service";
+import { userService } from "@/data/services/user.service";
 
 interface AddTodoProps {
     onAdded?: () => void;
+    assigneeList?: { email: string; id: string }[];
 }
-export default function AddTodo({ onAdded }: AddTodoProps) {
+
+export default function AddTodo({ onAdded, assigneeList }: AddTodoProps) {
     const {
         form,
         loading,
@@ -18,25 +21,43 @@ export default function AddTodo({ onAdded }: AddTodoProps) {
         handleChange,
         resetForm,
     } = useTodoForm();
-    // const { user } = useAuth();
+    const { user } = useAuth();
+    const [assigneeEmail, setAssigneeEmail] = useState<string>("");
+    const [assigneeError, setAssigneeError] = useState<string>("");
+
 
     const handleAddTodo = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!form.title.trim()) return;
         setLoading(true);
         setError(null);
+        setAssigneeError("");
         try {
+            let assigneeId = user?._id;
+            if (assigneeEmail.trim()) {
+                // Gọi API kiểm tra email
+                const res = await userService.getUserByEmail(assigneeEmail.trim());
+                if (!res.data || !res.data._id) {
+                    setAssigneeError("Email không tồn tại trong hệ thống");
+                    setLoading(false);
+                    return;
+                }
+                assigneeId = res.data._id;
+            }
             const payload = {
                 title: form.title,
                 description: form.description,
-                priority: form.priority
+                priority: form.priority,
+                assignee: assigneeId
             };
             console.log("Payload gửi đi addTodoService:", payload);
             await todoService.addTodo(payload);
             resetForm();
+            setAssigneeEmail("");
             if (onAdded) onAdded();
         } catch (err: any) {
-            setError(err.message || "Error");
+            if (err?.response?.data?.message) setAssigneeError(err.response.data.message);
+            else setError(err.message || "Error");
         } finally {
             setLoading(false);
         }
@@ -47,8 +68,8 @@ export default function AddTodo({ onAdded }: AddTodoProps) {
             <h2 className={style["addtodo-title"]}>Add New Task</h2>
             <form onSubmit={handleAddTodo} className={style["addtodo-form"]}>
                 <div className={style["addtodo-fields"]}>
-                    <div className={style["addtodo-field"]}>
-                        <label className={style["addtodo-label"]}>Title</label>
+                    <div className={style['addtodo-field']}>
+                        <label className={style['addtodo-label']}>Title</label>
                         <input
                             type="text"
                             value={form.title}
@@ -56,6 +77,29 @@ export default function AddTodo({ onAdded }: AddTodoProps) {
                             placeholder="Enter title..."
                             disabled={loading}
                             className={style["addtodo-input"]}
+                        />
+                    </div>
+                    <div className={style['addtodo-field']}>
+                        <label className={style['addtodo-label']}>Assignee Email</label>
+                        <input
+                            type="email"
+                            value={assigneeEmail}
+                            onChange={e => setAssigneeEmail(e.target.value)}
+                            placeholder={user?.email || "Nhập email người nhận việc"}
+                            disabled={loading}
+                            className={style['addtodo-input']}
+                        />
+                        {assigneeError && <div className={style['addtodo-error']}>{assigneeError}</div>}
+                        <div className="text-xs text-gray-500 mt-1">Để trống để tự giao cho mình</div>
+                    </div>
+                    <div className={style["addtodo-field"]}>
+                        <label className={style["addtodo-label"]}>Task Description</label>
+                        <textarea
+                            value={form.description}
+                            onChange={handleChange("description")}
+                            placeholder="Start writing here..."
+                            disabled={loading}
+                            className={style["addtodo-textarea"]}
                         />
                     </div>
                     <div className={style["addtodo-field"]}>
@@ -87,16 +131,6 @@ export default function AddTodo({ onAdded }: AddTodoProps) {
                             </label>
                         </div>
                     </div>
-                    <div className={style["addtodo-field"]}>
-                        <label className={style["addtodo-label"]}>Task Description</label>
-                        <textarea
-                            value={form.description}
-                            onChange={handleChange("description")}
-                            placeholder="Start writing here..."
-                            disabled={loading}
-                            className={style["addtodo-textarea"]}
-                        />
-                    </div>
                 </div>
                 <button
                     type="submit"
@@ -109,4 +143,5 @@ export default function AddTodo({ onAdded }: AddTodoProps) {
             </form>
         </div>
     );
+    
 }

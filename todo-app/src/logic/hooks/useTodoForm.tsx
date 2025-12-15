@@ -5,6 +5,7 @@ export type TodoFormState = {
     description: string;
     priority: "low" | "medium" | "high";
     date?: string;
+    assignee?: string;
 };
 
 export function useTodoForm(initial?: Partial<TodoFormState>) {

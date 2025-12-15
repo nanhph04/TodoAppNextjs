@@ -22,7 +22,7 @@ export default function Sidebar() {
             </div>
             <div>
                 <div className={style.menu}>
-                    {auth.role === "admin" && (
+                    {auth.hasPermission && auth.hasPermission("admin") && (
                         <Link href="/users" className={`${style["menu-item"]} ${pathname === "/users" ? style["active"] : ""}`}>Users</Link>
                     )}
                     <Link href="/todo" className={`${style["menu-item"]} ${pathname.startsWith("/todo") ? style["active"] : ""}`}>Tasks</Link>

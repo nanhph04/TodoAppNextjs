@@ -1,5 +1,7 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { Document } from "mongoose";
+import { Document, Types } from "mongoose";
+import { } from "mongoose";
+import { Role } from "src/roles/schema/Role.schema";
 
 export type UserDocument = User & Document;
 
@@ -17,8 +19,8 @@ export class User {
     @Prop({ type: String, default: null })
     refreshToken: string | null;
 
-    @Prop({ type: String, enum: ['user', 'admin'], default: 'user' })
-    role: string;
+    @Prop({ type: [{ type: Types.ObjectId, ref: 'Role' }], default: [] })
+    roles: Types.ObjectId[];
 
     @Prop()
     avatar: string;

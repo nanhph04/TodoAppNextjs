@@ -1,79 +1,152 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { CreateTodoDto } from './dto/create-todo.dto';
 import { UpdateTodoDto } from './dto/update-todo.dto';
-import { Todo } from 'src/todos/schema/Todos.schema';
-import { Types } from 'mongoose';
+import { Todo } from './schema/Todos.schema'; // Đảm bảo đường dẫn đúng
 import { TodosRepository } from './todos.repository';
 
 @Injectable()
 export class TodosService {
-  constructor(
-    private readonly todosRepository: TodosRepository
-  ) { }
+  constructor(private readonly todosRepository: TodosRepository) { }
 
-  async create(userId: string, createTodoDto: CreateTodoDto): Promise<Todo> {
-    const { _id, ...rest } = createTodoDto as any;
-    const newTodo = await this.todosRepository.create({
-      ...rest,
-      userId,
-    });
-    return newTodo;
+  // --- HELPER: Check quyền sở hữu ---
+  // Nếu user có quyền 'bất tử' (*:*) hoặc quyền 'any' -> Bỏ qua check
+  // Nếu chỉ có quyền 'own' -> Bắt buộc assignee phải là userId
+  private checkOwnership(task: Todo, userId: string, userPermissions: string[], action: 'read' | 'update' | 'delete') {
+    const hasAnyPerm = userPermissions.includes('*:*') || userPermissions.includes(`task:${action}:any`);
+    const hasOwnPerm = userPermissions.includes(`task:${action}:own`);
+
+    if (hasAnyPerm) return; // SuperAdmin hoặc Auditor -> OK
+
+    if (hasOwnPerm) {
+      // Logic: Chỉ được thao tác nếu mình là assignee hoặc createdBy
+      if (task.assignee.toString() !== userId && task.createdBy.toString() !== userId) {
+        throw new ForbiddenException('Bạn không có quyền thao tác trên task của người khác');
+      }
+      return;
+    }
+
+    throw new ForbiddenException('Bạn không có quyền thực hiện hành động này');
   }
 
-  async findOne(id: string): Promise<Todo> {
-    const todo = await this.todosRepository.findById(id);
-    if (!todo) {
-      throw new Error('Todo not found');
+  async create(createTodoDto: CreateTodoDto, userId: string, userPermissions: string[]): Promise<Todo> {
+    let assignee = createTodoDto.assignee;
+    // Import Types từ mongoose
+    const { Types } = await import('mongoose');
+
+    // Logic: Nếu không phải SuperAdmin (*:*), ép assignee là chính mình
+    if (!userPermissions.includes('*:*')) {
+      assignee = userId;
+
     }
+
+    // Convert assignee và createdBy sang ObjectId
+    const assigneeObjId = assignee ? new Types.ObjectId(assignee) : new Types.ObjectId(userId);
+    const createdByObjId = new Types.ObjectId(userId);
+
+    const todoData: any = {
+      ...createTodoDto,
+      assignee: assigneeObjId,
+      createdBy: createdByObjId,
+      status: createTodoDto['status'] || 'TODO',
+      priority: createTodoDto['priority'] || 'medium',
+    };
+    console.log('[TodosService][create] body:', createTodoDto);
+    console.log('[TodosService][create] userId:', userId);
+    console.log('[TodosService][create] userPermissions:', userPermissions);
+    console.log('[TodosService][create] assigneeObjId:', assigneeObjId.toString());
+    console.log('[TodosService][create] createdByObjId:', createdByObjId.toString());
+    console.log('[TodosService][create] Creating todo with data:', todoData);
+
+    return this.todosRepository.create(todoData);
+  }
+
+  // Gộp logic: Acc 1 chỉ lấy của mình, Acc 2/3 lấy hết
+  async findAllInternal(userId: string, userPermissions: string[], page: number, limit: number) {
+    console.log('[TodosService][findAllInternal] userId:', userId);
+    console.log('[TodosService][findAllInternal] userPermissions:', userPermissions);
+    // Nếu có quyền xem tất cả
+    if (userPermissions.includes('*:*') || userPermissions.includes('task:read:any')) {
+      return this.todosRepository.findAll(page, limit);
+    }
+
+    // Nếu chỉ có quyền xem của mình
+    if (userPermissions.includes('task:read:own')) {
+      // Code repository của bạn cần hỗ trợ trả về { data, total } ở hàm findByUserId nhé
+      // Hoặc gọi hàm filter chung
+      return this.todosRepository.findByUserId(userId, page, limit);
+    }
+
+    return { data: [], total: 0 };
+  }
+
+  async findOne(id: string, userId: string, userPermissions: string[]): Promise<Todo> {
+    const todo = await this.todosRepository.findById(id);
+    if (!todo) throw new NotFoundException('Todo not found');
+
+    // CHECK BẢO MẬT: Xem user có được phép xem task này không
+    this.checkOwnership(todo, userId, userPermissions, 'read');
+
     return todo;
   }
 
-  async update(id: string, updateTodoDto: UpdateTodoDto): Promise<Todo> {
-    if (!Types.ObjectId.isValid(id)) throw new NotFoundException('Invalid ID format');
-    let updateData: any = { ...updateTodoDto };
-    delete updateData.userId;
-    delete updateData._id;
-    const updatedTodo = await this.todosRepository.update(id, updateData);
-    if (!updatedTodo) {
-      throw new NotFoundException('Todo not found');
+  async update(id: string, updateTodoDto: UpdateTodoDto, userId: string, userPermissions: string[]): Promise<Todo> {
+    // 1. Phải tìm task trước để biết chủ nhân là ai
+    const todo = await this.todosRepository.findById(id);
+    if (!todo) throw new NotFoundException('Todo not found');
+
+    // 2. CHECK BẢO MẬT: Có phải task của mình không?
+    this.checkOwnership(todo, userId, userPermissions, 'update');
+
+    // 3. Nếu qua được bước trên mới cho update
+    const updateData: any = { ...updateTodoDto };
+    delete updateData['userId']; // Prevent hack
+    delete updateData['_id'];
+
+    // Nếu có assignee là string thì convert sang ObjectId
+    if (updateData.assignee && typeof updateData.assignee === 'string') {
+      try {
+        const { Types } = await import('mongoose');
+        updateData.assignee = new Types.ObjectId(updateData.assignee);
+      } catch (e) {
+        // Nếu lỗi import hoặc convert thì bỏ qua, để mongoose tự xử lý lỗi
+      }
     }
+
+    const updatedTodo = await this.todosRepository.update(id, updateData);
+    if (!updatedTodo) throw new NotFoundException('Todo not found');
     return updatedTodo;
   }
 
-  async remove(id: string): Promise<Todo> {
+  async remove(id: string, userId: string, userPermissions: string[]): Promise<Todo> {
+    const todo = await this.todosRepository.findById(id);
+    if (!todo) throw new NotFoundException('Todo not found');
+
+    // CHECK BẢO MẬT
+    this.checkOwnership(todo, userId, userPermissions, 'delete');
+
     const deletedTodo = await this.todosRepository.delete(id);
-    if (!deletedTodo) {
-      throw new NotFoundException('Todo not found');
-    }
+    if (!deletedTodo) throw new NotFoundException('Todo not found');
     return deletedTodo;
   }
 
-  async findByUserId(userId: string, page: number, limit: number): Promise<{ data: Todo[]; total: number }> {
-    if (!userId) {
-      return { data: [], total: 0 };
-    }
-    const [data, total] = await Promise.all([
-      this.todosRepository.findByUserId(userId, page, limit).then(res => res.data),
-      this.todosRepository.findByUserId(userId, page, limit).then(res => res.total)
-    ]);
-    return { data, total };
-  }
-
-  async findAll(page: number, limit: number): Promise<{ data: Todo[]; total: number }> {
-    return this.todosRepository.findAll(page, limit);
-  }
-
-  async countCompletedTodos(userId: string, isAdmin: boolean): Promise<{ completed: number; notCompleted: number; total: number }> {
+  // Fix logic count status dùng permissions thay vì role
+  async countTodoStatus(userId: string, userPermissions: string[]) {
     const filter: any = {};
-    if (!isAdmin) {
-      filter.userId = userId;
+
+    // Nếu KHÔNG có quyền xem all -> Chỉ count task của mình
+    const canReadAll = userPermissions.includes('*:*') || userPermissions.includes('task:read:any');
+    if (!canReadAll) {
+      filter.assignee = userId; // Đổi thành assignee cho đúng logic
     }
-    const [completed, notCompleted, total] = await Promise.all([
-      this.todosRepository.countByFilter({ ...filter, completed: true }),
-      this.todosRepository.countByFilter({ ...filter, completed: false }),
+
+    // Giả sử repo có hàm countByFilter
+    const [todo, inProgress, done, total] = await Promise.all([
+      this.todosRepository.countByFilter({ ...filter, status: 'TODO' }),
+      this.todosRepository.countByFilter({ ...filter, status: 'IN_PROGRESS' }),
+      this.todosRepository.countByFilter({ ...filter, status: 'DONE' }),
       this.todosRepository.countByFilter(filter)
     ]);
-    return { completed, notCompleted, total };
-  }
 
+    return { todo, inProgress, done, total };
+  }
 }

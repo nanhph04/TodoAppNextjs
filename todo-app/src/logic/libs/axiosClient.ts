@@ -2,7 +2,7 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
 // Tạo instance
 const axiosClient = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003',
+    baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003/api',
     headers: {
         'Content-Type': 'application/json',
     },
@@ -65,7 +65,7 @@ axiosClient.interceptors.response.use(
 
             try {
                 const res = await axios.post(
-                    `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003'}/auth/refresh`,
+                    `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003/api'}/auth/refresh`,
                     {},
                     { withCredentials: true } // Gửi cookie refresh token
                 );

@@ -2,9 +2,6 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestj
 import { UserService } from './user.service';
 import { UseGuards, Req } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { Role } from 'src/role/role.enum';
-import { Roles } from 'src/role/roles.decorator';
-import { RolesGuard } from 'src/role/roles.guard';
 
 @Controller('user')
 export class UserController {
@@ -18,8 +15,7 @@ export class UserController {
   }
 
   @Get()
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles(Role.ADMIN)
+  @UseGuards(AuthGuard('jwt'))
   getAllUsers(
     @Req() req: any,
     @Query('page') page: string = '1',
@@ -30,9 +26,20 @@ export class UserController {
   }
 
   @Delete(':id')
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles(Role.ADMIN)
+  @UseGuards(AuthGuard('jwt'))
   deleteUser(@Param('id') id: string) {
     return this.userService.deleteUser(id);
+  }
+
+  @Get('/permissions')
+  @UseGuards(AuthGuard('jwt'))
+  getUserPermissions(@Req() req: any) {
+    const userId = req.user?.sub;
+    return this.userService.getUserPermissions(userId);
+  }
+
+  @Get('/ by-email')
+  getUserByEmail(@Query('email') email: string) {
+    return this.userService.getUserByEmail(email);
   }
 }

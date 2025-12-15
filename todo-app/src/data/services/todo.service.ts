@@ -1,7 +1,7 @@
 import axiosClient from "@/logic/libs/axiosClient";
 import { Todo } from "@/data/interfaces/todos";
 
-const API_URL = "/api/todos";
+const API_URL = "/todos";
 
 type TodoData = Pick<Todo, "title" | "description" | "priority">;
 
@@ -14,14 +14,14 @@ export const todoService = {
             throw error;
         }
     },
-    getTodos: async (page: number = 1, limit: number = 3) => {
-        try {
-            const res = await axiosClient.get(`${API_URL}/me?page=${page}&limit=${limit}`);
-            return res.data;
-        } catch (error: any) {
-            throw error;
-        }
-    },
+    // getTodos: async (page: number = 1, limit: number = 3) => {
+    //     try {
+    //         const res = await axiosClient.get(`${API_URL}/me?page=${page}&limit=${limit}`);
+    //         return res.data;
+    //     } catch (error: any) {
+    //         throw error;
+    //     }
+    // },
 
     addTodo: async (data: TodoData) => {
         try {
@@ -52,7 +52,7 @@ export const todoService = {
 
     countStatus: async () => {
         try {
-            const res = await axiosClient.get(`${API_URL}/count-status`);
+            const res = await axiosClient.get(`${API_URL}/stats`);
             return res.data;
         } catch (error: any) {
             throw error;
