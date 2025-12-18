@@ -10,6 +10,11 @@ export class PermissionRepository {
         @InjectModel(Permission.name) private permissionModel: Model<PermissionDocument>
     ) { }
 
+    create(permission: Partial<PermissionDocument>): Promise<PermissionDocument> {
+        const newPermission = new this.permissionModel(permission);
+        return newPermission.save();
+    }
+
     findAll(): Promise<PermissionDocument[]> {
         return this.permissionModel.find().exec();
     }
@@ -22,8 +27,12 @@ export class PermissionRepository {
         return this.permissionModel.find({ slug: { $in: slugs } }).exec();
     }
 
-    // createMany(permissions: Partial<PermissionDocument>[]): Promise<PermissionDocument[]> {
-    //     return this.permissionModel.insertMany(permissions);
-    // }
+    findByIds(ids: string[]): Promise<PermissionDocument[]> {
+        return this.permissionModel.find({ _id: { $in: ids } }).exec();
+    }
+
+    findBy(filter: any): Promise<PermissionDocument[]> {
+        return this.permissionModel.find(filter).exec();
+    }
 
 }

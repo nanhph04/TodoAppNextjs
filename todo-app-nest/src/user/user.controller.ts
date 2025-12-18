@@ -21,7 +21,7 @@ export class UserController {
     @Query('page') page: string = '1',
     @Query('limit') limit: string = '10',
   ) {
-    console.log('User payload:', req.user);
+    // console.log('User payload:', req.user);
     return this.userService.getAllUsers(Number(page), Number(limit));
   }
 
@@ -35,6 +35,8 @@ export class UserController {
   @UseGuards(AuthGuard('jwt'))
   getUserPermissions(@Req() req: any) {
     const userId = req.user?.sub;
+    // console.log('UserID for permissions:', userId, 'Payload:', req.user);
+
     return this.userService.getUserPermissions(userId);
   }
 

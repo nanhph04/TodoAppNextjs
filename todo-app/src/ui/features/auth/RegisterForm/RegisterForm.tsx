@@ -41,7 +41,7 @@ export default function RegisterForm() {
             // Nếu backend trả về accessToken và user, tự động đăng nhập
             const { accessToken } = res.data;
             if (accessToken) {
-                login(accessToken, null);
+                login(accessToken);
             } else {
                 setError('Đăng ký thành công, vui lòng đăng nhập');
             }

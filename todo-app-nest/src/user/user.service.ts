@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { UserRepository } from './user.repository';
 import { RoleRepository } from 'src/roles/role.repository';
+import { PermissionRepository } from 'src/permission/permission.repository';
 import { Types } from 'mongoose';
 
 @Injectable()
@@ -8,6 +9,7 @@ export class UserService {
   constructor(
     private readonly userRepository: UserRepository,
     private readonly roleRepository: RoleRepository,
+    private readonly permissionRepository: PermissionRepository,
   ) { }
 
   async getAllUsers(page: number = 1, limit: number = 10): Promise<Array<{
@@ -85,11 +87,20 @@ export class UserService {
 
     const roleIds = user.roles || [];
     if (roleIds.length === 0) return [];
+
+    // Convert string ID sang ObjectId để query Role
     const ids = roleIds.map((id: any) => new Types.ObjectId(id));
+
+    // RoleRepo đã populate permissions => roleDocs chứa full info của Permission
     const roleDocs = await this.roleRepository.findByIds(ids);
+
+    // Lấy trực tiếp slug từ kết quả đã populate
     const slugs = roleDocs
-      .flatMap(r => r.permissions)
-      .map(p => (typeof p === 'string' ? p : p.slug));
+      .flatMap((r: any) => r.permissions) // r.permissions là mảng object
+      .filter((p: any) => p && p.slug)    // Lọc những permission hợp lệ và có slug
+      .map((p: any) => p.slug);           // Chỉ lấy trường slug
+
+    // Loại bỏ trùng lặp và trả về
     return [...new Set(slugs)];
   }
 

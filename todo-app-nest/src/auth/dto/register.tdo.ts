@@ -11,7 +11,5 @@ export class RegisterDto {
     @IsNotEmpty()
     password: string;
 
-    @IsNotEmpty()
-    roles: string[]; // Nếu muốn cho phép truyền roles khi đăng ký, giữ lại. Nếu luôn mặc định thì có thể bỏ field này khỏi DTO.
 
 }

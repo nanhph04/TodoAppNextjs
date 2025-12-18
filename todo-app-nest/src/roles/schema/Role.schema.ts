@@ -12,7 +12,7 @@ export class Role {
     name: string;
 
     @Prop({ type: [{ type: Types.ObjectId, ref: 'Permission' }] })
-    permissions: Permission[];
+    permissions: Types.ObjectId[];
 }
 
 export const RoleSchema = SchemaFactory.createForClass(Role);

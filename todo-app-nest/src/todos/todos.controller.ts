@@ -5,6 +5,7 @@ import { UpdateTodoDto } from './dto/update-todo.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { PermissionsGuard } from 'src/auth/permissions.guard';
 import { Permissions } from 'src/auth/permissions.decorator';
+import { requireUserId } from 'src/auth/request-context';
 
 @Controller('todos')
 @UseGuards(AuthGuard('jwt'), PermissionsGuard)
@@ -15,8 +16,7 @@ export class TodosController {
   @Permissions('task:create')
   create(@Body() createTodoDto: CreateTodoDto, @Req() req: any) {
     console.log('POST /todos req.user:', req.user);
-    const userPermissions = Array.isArray(req.userPermissions) ? req.userPermissions : [];
-    const userId = req.user.userId || req.user.sub || req.user.id || req.user._id;
+    const { userId, permissions: userPermissions } = requireUserId(req);
     return this.todosService.create(createTodoDto, userId, userPermissions);
   }
 
@@ -29,8 +29,7 @@ export class TodosController {
   findAll(@Req() req: any, @Query('page') page = 1, @Query('limit') limit = 10) {
     console.log('GET /todos req.user:', req.user);
     console.log('GET /todos req.userPermissions:', req.userPermissions);
-    const userPermissions = Array.isArray(req.userPermissions) ? req.userPermissions : [];
-    const userId = req.user.userId || req.user.sub || req.user.id || req.user._id;
+    const { userId, permissions: userPermissions } = requireUserId(req);
     return this.todosService.findAllInternal(
       userId,
       userPermissions,
@@ -43,8 +42,7 @@ export class TodosController {
   // Không require 'task:read:any' cứng, vì Acc 1 cũng cần xem stats của chính họ
   async getStats(@Req() req: any) {
     console.log('GET /todos/stats req.user:', req.user);
-    const userPermissions = Array.isArray(req.userPermissions) ? req.userPermissions : [];
-    const userId = req.user.userId || req.user.sub || req.user.id || req.user._id;
+    const { userId, permissions: userPermissions } = requireUserId(req);
     return this.todosService.countTodoStatus(userId, userPermissions);
   }
 
@@ -52,8 +50,7 @@ export class TodosController {
   // Guard chỉ chặn vòng ngoài
   findOne(@Param('id') id: string, @Req() req: any) {
     console.log('GET /todos/:id req.user:', req.user);
-    const userPermissions = Array.isArray(req.userPermissions) ? req.userPermissions : [];
-    const userId = req.user.userId || req.user.sub || req.user.id || req.user._id;
+    const { userId, permissions: userPermissions } = requireUserId(req);
     return this.todosService.findOne(id, userId, userPermissions);
   }
 
@@ -61,8 +58,7 @@ export class TodosController {
   @Permissions('task:update:own', 'task:update:any')
   update(@Param('id') id: string, @Body() updateTodoDto: UpdateTodoDto, @Req() req: any) {
     console.log('PUT /todos/:id req.user:', req.user);
-    const userPermissions = Array.isArray(req.userPermissions) ? req.userPermissions : [];
-    const userId = req.user.userId || req.user.sub || req.user.id || req.user._id;
+    const { userId, permissions: userPermissions } = requireUserId(req);
     return this.todosService.update(id, updateTodoDto, userId, userPermissions);
   }
 
@@ -70,8 +66,7 @@ export class TodosController {
   @Permissions('task:delete:own') // Hoặc task:delete:any
   remove(@Param('id') id: string, @Req() req: any) {
     console.log('DELETE /todos/:id req.user:', req.user);
-    const userPermissions = Array.isArray(req.userPermissions) ? req.userPermissions : [];
-    const userId = req.user.userId || req.user.sub || req.user.id || req.user._id;
+    const { userId, permissions: userPermissions } = requireUserId(req);
     return this.todosService.remove(id, userId, userPermissions);
   }
 }

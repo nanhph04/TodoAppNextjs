@@ -29,6 +29,9 @@ export default function Sidebar() {
                     {isLoggedIn && (
                         <Link href="/profile" className={`${style["menu-item"]} ${pathname.startsWith("/profile") ? style["active"] : ""}`}>Profile</Link>
                     )}
+                    {auth.hasPermission && auth.hasPermission("admin") && (
+                        <Link href="/role" className={`${style["menu-item"]} ${pathname === "/role" ? style["active"] : ""}`}>Role</Link>
+                    )}
                 </div>
             </div>
             <div className={style["sidebar-footer"]}>

@@ -19,9 +19,7 @@ export default function TodoStatus() {
             setError("");
             try {
                 const res = await todoService.countStatus();
-                console.log("res", res);
                 const data = res;
-                console.log("data", data);
                 setCompletedTodos(data?.completed || 0);
                 setNotCompletedTodos(data?.notCompleted || 0);
                 setTotalTodos(data?.total || 0);

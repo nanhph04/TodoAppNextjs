@@ -16,6 +16,7 @@ export default function TodoListContainer() {
         loading,
         error,
         refreshTodos,
+        deleteTodo,
     } = useTodos(currentPage);
     const [showAdd, setShowAdd] = React.useState(false);
     const handleOpen = () => setShowAdd(true);
@@ -58,6 +59,7 @@ export default function TodoListContainer() {
                     page={currentPage}
                     totalPages={totalPages}
                     onPageChange={handlePageChange}
+                    onDelete={deleteTodo}
                 />
             </div>
         </div>

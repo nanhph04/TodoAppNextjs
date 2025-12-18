@@ -56,3 +56,16 @@
     color: #f44336;
     font-weight: 600;
 }
+
+.todo-btn {
+    background: #2563eb;
+    color: #fff;
+    border-radius: 6px;
+    padding: 6px 18px;
+    border: none;
+    cursor: pointer;
+}
+
+.todo-btn:hover {
+    background: #1e40af;
+}

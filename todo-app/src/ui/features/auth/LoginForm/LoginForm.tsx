@@ -10,7 +10,7 @@ import GoogleButton from '@/ui/components/Common/GoogleButton/GoogleButton';
 import { authService } from '@/data/services/auth.service';
 import { useAuth } from '@/logic/hooks/useAuth';
 import { useRouter } from 'next/navigation';
-import { userService } from '@/data/services/user.service';
+// import { userService } from '@/data/services/user.service';
 
 export default function LoginForm() {
     const { login } = useAuth();
@@ -46,7 +46,7 @@ export default function LoginForm() {
             });
             const { accessToken } = res.data;
             if (accessToken) {
-                login(accessToken, null);
+                login(accessToken);
             } else {
                 setError('Đăng nhập thất bại, vui lòng thử lại');
             }
@@ -76,10 +76,9 @@ export default function LoginForm() {
                         setLoading(true);
                         try {
                             const res = await authService.loginWithGoogle(token);
-                            console.log('Response từ loginWithGoogle:', res);
+                            // console.log('Response từ loginWithGoogle:', res);
                             const { accessToken } = res.data;
-                            const userInfo = await userService.getUserProfile().then(r => r.data);
-                            login(accessToken, userInfo);
+                            login(accessToken);
 
                         } catch (err) {
                             setError('Đăng nhập Google thất bại');

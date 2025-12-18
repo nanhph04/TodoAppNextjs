@@ -1,10 +1,13 @@
 "use client";
 import React, { useState } from "react";
 import style from "./AddTodo.module.css";
-import { useTodoForm } from "@/logic/hooks/useTodoForm";
+import { useForm } from "@/logic/hooks/useForm";
 import { useAuth } from "@/logic/hooks/useAuth";
 import { todoService } from "@/data/services/todo.service";
 import { userService } from "@/data/services/user.service";
+// import { handleApiError } from "@/logic/utils/errorHandler";
+// Nếu không có type Priority, dùng trực tiếp:
+type Priority = "low" | "medium" | "high";
 
 interface AddTodoProps {
     onAdded?: () => void;
@@ -20,12 +23,18 @@ export default function AddTodo({ onAdded, assigneeList }: AddTodoProps) {
         setError,
         handleChange,
         resetForm,
-    } = useTodoForm();
+        setForm,
+    } = useForm();
+    // setPriority helper tại chỗ, không phụ thuộc useTodoForm
+    const setPriority = (value: Priority) => {
+        setForm((prev: any) => ({ ...prev, priority: value }));
+    };
     const { user } = useAuth();
     const [assigneeEmail, setAssigneeEmail] = useState<string>("");
     const [assigneeError, setAssigneeError] = useState<string>("");
 
 
+    const [optimisticTodos, setOptimisticTodos] = useState<any[]>([]);
     const handleAddTodo = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!form.title.trim()) return;
@@ -35,11 +44,9 @@ export default function AddTodo({ onAdded, assigneeList }: AddTodoProps) {
         try {
             let assigneeId = user?._id;
             if (assigneeEmail.trim()) {
-                // Gọi API kiểm tra email
                 const res = await userService.getUserByEmail(assigneeEmail.trim());
                 if (!res.data || !res.data._id) {
                     setAssigneeError("Email không tồn tại trong hệ thống");
-                    setLoading(false);
                     return;
                 }
                 assigneeId = res.data._id;
@@ -47,17 +54,22 @@ export default function AddTodo({ onAdded, assigneeList }: AddTodoProps) {
             const payload = {
                 title: form.title,
                 description: form.description,
-                priority: form.priority,
+                priority: form.priority as Priority,
                 assignee: assigneeId
             };
-            console.log("Payload gửi đi addTodoService:", payload);
+            // Optimistic UI: add to local list
+            setOptimisticTodos(prev => [
+                { ...payload, _id: Math.random().toString(36).slice(2), optimistic: true },
+                ...prev
+            ]);
             await todoService.addTodo(payload);
             resetForm();
             setAssigneeEmail("");
             if (onAdded) onAdded();
         } catch (err: any) {
-            if (err?.response?.data?.message) setAssigneeError(err.response.data.message);
-            else setError(err.message || "Error");
+            // const msg = handleApiError(err);
+            setAssigneeError("An error occurred while adding the todo.");
+            setError(err.message || "An error occurred while adding the todo.");
         } finally {
             setLoading(false);
         }
@@ -107,25 +119,31 @@ export default function AddTodo({ onAdded, assigneeList }: AddTodoProps) {
                         <div className={style["priority-group"]}>
                             <label className={style["priority-extreme"]}>
                                 <input
-                                    type="checkbox"
+                                    type="radio"
+                                    name="priority"
+                                    value="high"
                                     checked={form.priority === "high"}
-                                    onChange={() => handleChange("priority")({ target: { name: "priority", value: "high" } } as any)}
+                                    onChange={() => setPriority("high")}
                                     disabled={loading}
                                 /> Extreme
                             </label>
                             <label className={style["priority-moderate"]}>
                                 <input
-                                    type="checkbox"
+                                    type="radio"
+                                    name="priority"
+                                    value="medium"
                                     checked={form.priority === "medium"}
-                                    onChange={() => handleChange("priority")({ target: { name: "priority", value: "medium" } } as any)}
+                                    onChange={() => setPriority("medium")}
                                     disabled={loading}
                                 /> Moderate
                             </label>
                             <label className={style["priority-low"]}>
                                 <input
-                                    type="checkbox"
+                                    type="radio"
+                                    name="priority"
+                                    value="low"
                                     checked={form.priority === "low"}
-                                    onChange={() => handleChange("priority")({ target: { name: "priority", value: "low" } } as any)}
+                                    onChange={() => setPriority("low")}
                                     disabled={loading}
                                 /> Low
                             </label>
@@ -143,5 +161,5 @@ export default function AddTodo({ onAdded, assigneeList }: AddTodoProps) {
             </form>
         </div>
     );
-    
+
 }
