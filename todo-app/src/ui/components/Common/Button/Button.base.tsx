@@ -3,7 +3,6 @@ import React from "react";
 
 interface ButtonProps {
     title?: string;
-    // Allow simple callbacks or React mouse handlers, sync or async
     onClick?: (() => void | Promise<void>) | React.MouseEventHandler<HTMLButtonElement>;
     disabled?: boolean;
     className?: string;

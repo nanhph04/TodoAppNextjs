@@ -3,9 +3,9 @@ import { TodosService } from './todos.service';
 import { CreateTodoDto } from './dto/create-todo.dto';
 import { UpdateTodoDto } from './dto/update-todo.dto';
 import { AuthGuard } from '@nestjs/passport';
-import { PermissionsGuard } from 'src/auth/permissions.guard';
-import { Permissions } from 'src/auth/permissions.decorator';
-import { requireUserId } from 'src/auth/request-context';
+import { PermissionsGuard } from 'src/auth/guard/permissions.guard';
+import { Permissions } from 'src/auth/decorator/permissions.decorator';
+import { requireUserId } from 'src/auth/context/request-context';
 
 @Controller('todos')
 @UseGuards(AuthGuard('jwt'), PermissionsGuard)
@@ -13,7 +13,7 @@ export class TodosController {
   constructor(private readonly todosService: TodosService) { }
 
   @Post()
-  @Permissions('task:create')
+  @Permissions('task:create', '')
   create(@Body() createTodoDto: CreateTodoDto, @Req() req: any) {
     console.log('POST /todos req.user:', req.user);
     const { userId, permissions: userPermissions } = requireUserId(req);
@@ -27,8 +27,8 @@ export class TodosController {
   // Không cần require cứng permission nào ở đây, vì trong service ta check logic if/else
   // Hoặc có thể require tối thiểu 'task:read:own'
   findAll(@Req() req: any, @Query('page') page = 1, @Query('limit') limit = 10) {
-    console.log('GET /todos req.user:', req.user);
-    console.log('GET /todos req.userPermissions:', req.userPermissions);
+    // console.log('GET /todos req.user:', req.user);
+    // console.log('GET /todos req.userPermissions:', req.userPermissions);
     const { userId, permissions: userPermissions } = requireUserId(req);
     return this.todosService.findAllInternal(
       userId,

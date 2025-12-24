@@ -3,6 +3,7 @@ import { CreateTodoDto } from './dto/create-todo.dto';
 import { UpdateTodoDto } from './dto/update-todo.dto';
 import { Todo } from './schema/Todos.schema'; // Đảm bảo đường dẫn đúng
 import { TodosRepository } from './todos.repository';
+import { Types } from 'mongoose';
 
 @Injectable()
 export class TodosService {
@@ -29,14 +30,12 @@ export class TodosService {
   }
 
   async create(createTodoDto: CreateTodoDto, userId: string, userPermissions: string[]): Promise<Todo> {
+
     let assignee = createTodoDto.assignee;
-    // Import Types từ mongoose
-    const { Types } = await import('mongoose');
-
-    // Logic: Nếu không phải SuperAdmin (*:*), ép assignee là chính mình
-    if (!userPermissions.includes('*:*')) {
+    // Nếu KHÔNG có quyền tạo cho người khác, ép assignee là chính mình
+    const canCreateAny = userPermissions.includes('*:*') || userPermissions.includes('task:create:any');
+    if (!canCreateAny) {
       assignee = userId;
-
     }
 
     // Convert assignee và createdBy sang ObjectId
@@ -50,29 +49,18 @@ export class TodosService {
       status: createTodoDto['status'] || 'TODO',
       priority: createTodoDto['priority'] || 'medium',
     };
-    console.log('[TodosService][create] body:', createTodoDto);
-    console.log('[TodosService][create] userId:', userId);
-    console.log('[TodosService][create] userPermissions:', userPermissions);
-    console.log('[TodosService][create] assigneeObjId:', assigneeObjId.toString());
-    console.log('[TodosService][create] createdByObjId:', createdByObjId.toString());
-    console.log('[TodosService][create] Creating todo with data:', todoData);
-
     return this.todosRepository.create(todoData);
   }
 
-  // Gộp logic: Acc 1 chỉ lấy của mình, Acc 2/3 lấy hết
   async findAllInternal(userId: string, userPermissions: string[], page: number, limit: number) {
-    console.log('[TodosService][findAllInternal] userId:', userId);
-    console.log('[TodosService][findAllInternal] userPermissions:', userPermissions);
+    // console.log('[TodosService][findAllInternal] userId:', userId);
+    // console.log('[TodosService][findAllInternal] userPermissions:', userPermissions);
     // Nếu có quyền xem tất cả
     if (userPermissions.includes('*:*') || userPermissions.includes('task:read:any')) {
       return this.todosRepository.findAll(page, limit);
     }
 
-    // Nếu chỉ có quyền xem của mình
     if (userPermissions.includes('task:read:own')) {
-      // Code repository của bạn cần hỗ trợ trả về { data, total } ở hàm findByUserId nhé
-      // Hoặc gọi hàm filter chung
       return this.todosRepository.findByUserId(userId, page, limit);
     }
 
@@ -129,23 +117,24 @@ export class TodosService {
     return deletedTodo;
   }
 
-  // Fix logic count status dùng permissions thay vì role
   async countTodoStatus(userId: string, userPermissions: string[]) {
     const filter: any = {};
 
-    // Nếu KHÔNG có quyền xem all -> Chỉ count task của mình
     const canReadAll = userPermissions.includes('*:*') || userPermissions.includes('task:read:any');
     if (!canReadAll) {
-      filter.assignee = userId; // Đổi thành assignee cho đúng logic
+      filter.$or = [
+        { assignee: userId },
+        { createdBy: userId }
+      ];
     }
 
-    // Giả sử repo có hàm countByFilter
     const [todo, inProgress, done, total] = await Promise.all([
       this.todosRepository.countByFilter({ ...filter, status: 'TODO' }),
       this.todosRepository.countByFilter({ ...filter, status: 'IN_PROGRESS' }),
       this.todosRepository.countByFilter({ ...filter, status: 'DONE' }),
       this.todosRepository.countByFilter(filter)
     ]);
+    console.log('[TodosService][countTodoStatus] todo:', todo, inProgress, done, total);
 
     return { todo, inProgress, done, total };
   }

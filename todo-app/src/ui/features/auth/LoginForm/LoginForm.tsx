@@ -72,22 +72,21 @@ export default function LoginForm() {
             <footer className={style.loginFormFooter}>
                 <GoogleButton
                     onSuccess={async (token: string) => {
-                        console.log('Google ID token nhận được:', token);
-                        setLoading(true);
+                        // Tạo loading riêng cho Google login để không ảnh hưởng loading của form chính
+                        setError("");
+                        let googleLoading = true;
                         try {
                             const res = await authService.loginWithGoogle(token);
-                            // console.log('Response từ loginWithGoogle:', res);
                             const { accessToken } = res.data;
                             login(accessToken);
-
                         } catch (err) {
                             setError('Đăng nhập Google thất bại');
                         } finally {
-                            setLoading(false);
+                            googleLoading = false;
                         }
                     }}
                 />
-                <span>Don't have an account? <Link href="/register" style={{ color: '#008BD9', fontSize: '1rem', fontWeight: '500' }}>Create one</Link></span>
+                <span>Don't have an account? <Link href="/register">Create one</Link></span>
             </footer>
         </section>
     );

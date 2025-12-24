@@ -1,7 +1,7 @@
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { PERMISSIONS_KEY } from './permissions.decorator';
-import { UserService } from '../user/user.service';
+import { PERMISSIONS_KEY } from '../decorator/permissions.decorator';
+import { UserService } from '../../user/user.service';
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
@@ -17,7 +17,7 @@ export class PermissionsGuard implements CanActivate {
         if (!user) {
             throw new ForbiddenException('User not authenticated');
         }
-   
+
         const userId = user._id || user.id || user.userId || user.sub;
         const userPermissions: string[] = await this.userService.getUserPermissions(userId);
         request.userPermissions = userPermissions;

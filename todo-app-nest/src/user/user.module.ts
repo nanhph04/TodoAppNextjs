@@ -8,7 +8,7 @@ import { UserRepository } from './user.repository';
 import { RoleSchema } from 'src/roles/schema/Role.schema';
 import { PermissionSchema } from 'src/permission/schema/Permission.schema';
 import { RolesModule } from 'src/roles/roles.module';
-import { PermissionsGuard } from 'src/auth/permissions.guard';
+import { PermissionsGuard } from 'src/auth/guard/permissions.guard';
 
 @Module({
   imports: [

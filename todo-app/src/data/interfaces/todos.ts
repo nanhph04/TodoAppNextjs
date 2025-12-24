@@ -1,16 +1,11 @@
-import { User } from "./users";
-
 export interface Todo {
     _id?: string;
-    id?: string;
     assigneeId?: string;
     creatorId?: string;
-    assignee?: User;
-    creator?: User;
     title?: string;
     description?: string;
     priority?: "low" | "medium" | "high";
-    status?: "pending" | "in-progress" | "completed";
+    status?: "TODO" | "IN_PROGRESS" | "DONE";
     dueDate?: string;
     createdAt?: string;
     completedAt?: string;

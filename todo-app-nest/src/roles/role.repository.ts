@@ -58,5 +58,10 @@ export class RoleRepository {
         ).populate('permissions').exec();
     }
 
-
+    // async getPermissionSlugsByRoleId(roleId: string | Types.ObjectId): Promise<string[]> {
+    //     const role = await this.roleModel.findById(roleId).populate('permissions', 'slug').exec();
+    //     if (!role) return [];
+    //     // role.permissions là mảng object Permission đã được populate, chỉ lấy slug
+    //     return (role.permissions as any[]).map(p => p.slug);
+    // }
 }

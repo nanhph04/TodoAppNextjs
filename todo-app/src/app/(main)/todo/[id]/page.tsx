@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { useTodos } from "@/logic/hooks/useTodos";
 import type { Todo } from "@/data/interfaces/todos";
 
-type Status = "pending" | "in-progress" | "completed";
+type Status = "TODO" | "IN_PROGRESS" | "DONE";
 
 type EditForm = {
     description: string;
@@ -19,7 +19,7 @@ export default function TodoDetail() {
     const [todo, setTodo] = useState<Todo | null>(null);
     const [form, setForm] = useState<EditForm>({
         description: "",
-        status: "pending",
+        status: "TODO",
     });
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState("");
@@ -104,14 +104,14 @@ export default function TodoDetail() {
                     <select
                         className="ml-2 border rounded px-2 py-1"
                         value={form.status}
-                        disabled={saving || form.status === "completed"}
+                        disabled={saving || form.status === "DONE"}
                         onChange={(e) =>
                             setForm((f) => ({ ...f, status: e.target.value as Status }))
                         }
                     >
-                        <option value="pending">Chưa thực hiện</option>
-                        <option value="in-progress">Đang thực hiện</option>
-                        <option value="completed">Đã hoàn thành</option>
+                        <option value="TODO">Chưa thực hiện</option>
+                        <option value="IN_PROGRESS">Đang thực hiện</option>
+                        <option value="DONE">Đã hoàn thành</option>
                     </select>
                 </div>
             </div>
@@ -119,17 +119,17 @@ export default function TodoDetail() {
             <div className="flex gap-4 mt-8">
                 <button
                     className="btn-primary"
-                    disabled={saving || form.status === "completed"}
+                    disabled={saving || form.status === "DONE"}
                     onClick={() => handleUpdate(form)}
                 >
                     Lưu
                 </button>
 
-                {form.status !== "completed" && (
+                {form.status !== "DONE" && (
                     <button
                         className="btn-success"
                         disabled={saving}
-                        onClick={() => handleUpdate({ status: "completed" })}
+                        onClick={() => handleUpdate({ status: "DONE" })}
                     >
                         Hoàn thành
                     </button>

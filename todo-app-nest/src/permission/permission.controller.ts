@@ -3,8 +3,8 @@ import { PermissionsService } from './permission.service';
 import { Body, Post, Get, UseGuards } from '@nestjs/common';
 import { CreatePermissionDto } from './dto/create-permission.dto';
 import { AuthGuard } from '@nestjs/passport';
-import { PermissionsGuard } from 'src/auth/permissions.guard';
-import { Permissions } from 'src/auth/permissions.decorator';
+import { PermissionsGuard } from 'src/auth/guard/permissions.guard';
+import { Permissions } from 'src/auth/decorator/permissions.decorator';
 
 // --- CONTROLLER ---
 @Controller('permissions')

@@ -25,7 +25,6 @@ export class UserService {
       throw new Error('Users not found');
     }
 
-    // For each user, fetch their roles' names
     return Promise.all(users.map(async user => {
       const roleIds = user.roles || [];
       let roles: string[] = [];

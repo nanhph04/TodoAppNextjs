@@ -9,10 +9,19 @@ export class UserController {
 
   @Get('profile')
   @UseGuards(AuthGuard('jwt'))
-  getProfile(@Req() req: any) {
+  async getProfile(@Req() req: any) {
     const userId = req.user?.sub;
-    return this.userService.getUserById(userId);
+    const userInfo = this.userService.getUserById(userId);
+    const permissions = this.userService.getUserPermissions(userId);
+    return Promise.all([userInfo, permissions]).then(([info, perms]) => {
+      return {
+        ...info,
+        permissions: perms
+      };
+    });
   }
+
+
 
   @Get()
   @UseGuards(AuthGuard('jwt'))
@@ -31,16 +40,14 @@ export class UserController {
     return this.userService.deleteUser(id);
   }
 
-  @Get('/permissions')
-  @UseGuards(AuthGuard('jwt'))
-  getUserPermissions(@Req() req: any) {
-    const userId = req.user?.sub;
-    // console.log('UserID for permissions:', userId, 'Payload:', req.user);
+  // @Get('/permissions')
+  // @UseGuards(AuthGuard('jwt'))
+  // async getUserPermissions(@Req() req: any) {
+  //   const userId = req.user?.sub;
+  //   return this.userService.getUserPermissions(userId);
+  // }
 
-    return this.userService.getUserPermissions(userId);
-  }
-
-  @Get('/ by-email')
+  @Get('/by-email')
   getUserByEmail(@Query('email') email: string) {
     return this.userService.getUserByEmail(email);
   }

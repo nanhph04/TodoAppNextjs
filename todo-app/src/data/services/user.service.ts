@@ -10,7 +10,7 @@ export const userService = {
 
     getUserById: (id: string) => axiosClient.get(`/user/${id}`),
 
-    getUserPermissions: () => axiosClient.get(`/user/permissions`),
+    // getUserPermissions: () => axiosClient.get(`/user/permissions`),
 
     getUserByEmail: (email: string) => axiosClient.get(`/user/by-email?email=${email}`),
 

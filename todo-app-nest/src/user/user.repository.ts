@@ -54,5 +54,7 @@ export class UserRepository {
             .exec();
     }
 
-
+    async findByRole(roleId: Types.ObjectId) {
+        return this.userModel.find({ role: roleId }).exec();
+    }
 }

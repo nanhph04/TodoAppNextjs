@@ -3,8 +3,8 @@ import { RolesService } from './roles.service';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { Body, Post, Get, Param, Put, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { PermissionsGuard } from 'src/auth/permissions.guard';
-import { Permissions } from 'src/auth/permissions.decorator';
+import { PermissionsGuard } from 'src/auth/guard/permissions.guard';
+import { Permissions } from 'src/auth/decorator/permissions.decorator';
 import { UpdateRoleDto } from './dto/update-role.dto';
 
 @Controller('roles')
@@ -19,7 +19,7 @@ export class RolesController {
         return this.rolesService.create(dto);
     }
 
-    // Cập nhật quyền cho Role (Logic điều chỉnh permission)
+    // Cập nhật quyền cho Role
     @Put(':id')
     @Permissions('sys:role:update')
     update(@Param('id') id: string, @Body() dto: UpdateRoleDto) {
@@ -31,7 +31,12 @@ export class RolesController {
     @Get()
     @Permissions('sys:read:any')
     findAll() {
-        // Populate permissions để FE biết role này đang có quyền gì (tên, slug)
-        return this.rolesService.findAllWithPopulate();
+        return this.rolesService.findAllRoles();
+    }
+
+    @Get(':id')
+    @Permissions('sys:role:read')
+    getRoleById(@Param('id') id: string) {
+        return this.rolesService.getRoleById(id);
     }
 }

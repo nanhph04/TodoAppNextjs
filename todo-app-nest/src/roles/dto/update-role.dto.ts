@@ -1,9 +1,8 @@
 import { IsArray, IsMongoId } from 'class-validator';
-import { Types } from 'mongoose';
 
 export class UpdateRoleDto {
-    // Chỉ cập nhật permissions, tên role thường ít sửa (hoặc optional)
+    // Chỉ nhận mảng string ObjectId
     @IsArray()
     @IsMongoId({ each: true })
-    permissionIds: Types.ObjectId[];
+    permissionIds: string[];
 }

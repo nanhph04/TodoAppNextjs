@@ -3,7 +3,7 @@ import { Todo } from "@/data/interfaces/todos";
 
 const API_URL = "/todos";
 
-type TodoData = Pick<Todo, "title" | "description" | "priority">;
+type TodoData = Pick<Todo, "title" | "description" | "priority" | "status">;
 
 export const todoService = {
     getAllTodos: async (page: number = 1, limit: number = 3) => {

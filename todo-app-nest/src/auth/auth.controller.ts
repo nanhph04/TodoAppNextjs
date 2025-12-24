@@ -4,7 +4,7 @@ import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.tdo';
 import { LoginDto } from './dto/login.dto';
-import { requireUserId } from 'src/auth/request-context';
+import { requireUserId } from 'src/auth/context/request-context';
 
 
 @Controller('auth')
