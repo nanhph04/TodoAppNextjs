@@ -3,7 +3,9 @@ export interface User {
     fullName: string;
     email: string;
     password?: string;
-    refreshToken?: string;
+    roles: string[];
+    permissions: string[];
+    refreshToken: string;
     createdAt: string;
     updatedAt: string;
 }

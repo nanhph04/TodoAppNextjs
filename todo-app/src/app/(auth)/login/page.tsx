@@ -1,7 +1,7 @@
 "use client";
 import AuthLayout from '@/app/(auth)/layout';
-import LoginForm from '@/ui/pages/auth/LoginForm/LoginForm';
-import { useAuth } from '@/logic/stores/AuthContext';
+import LoginForm from '@/ui/features/auth/LoginForm/LoginForm';
+import { useAuth } from '@/logic/hooks/useAuth';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -12,7 +12,7 @@ export default function LoginPage() {
     const router = useRouter();
     useEffect(() => {
         if (accessToken) {
-            router.replace("/");
+            router.replace("/todo");
         }
     }, [accessToken, router]);
     if (accessToken) return null;

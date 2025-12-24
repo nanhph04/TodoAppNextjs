@@ -1,4 +1,3 @@
-import React from "react";
 import "./Header.css";
 import { FaSearch, FaCalendarAlt, FaBell } from "react-icons/fa";
 

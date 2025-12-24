@@ -1,11 +1,12 @@
 export interface Todo {
-    _id: string;
-    id: string;
-    userId: string;
-    title: string;
+    _id?: string;
+    assigneeId?: string;
+    creatorId?: string;
+    title?: string;
     description?: string;
-    priority: "low" | "medium" | "high";
-    completed: boolean;
-    createdAt: string;
+    priority?: "low" | "medium" | "high";
+    status?: "TODO" | "IN_PROGRESS" | "DONE";
+    dueDate?: string;
+    createdAt?: string;
     completedAt?: string;
 }

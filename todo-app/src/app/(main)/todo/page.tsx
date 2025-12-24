@@ -1,4 +1,4 @@
-import TodoPage from "@/ui/pages/todo";
+import TodoPage from "@/ui/features/todo/page/index";
 
 export default function Todo() {
     return (

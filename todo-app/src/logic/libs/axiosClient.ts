@@ -2,7 +2,7 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
 // Tạo instance
 const axiosClient = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003',
+    baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003/api',
     headers: {
         'Content-Type': 'application/json',
     },
@@ -64,10 +64,8 @@ axiosClient.interceptors.response.use(
             isRefreshing = true;
 
             try {
-                // QUAN TRỌNG: Dùng axios gốc (không phải axiosClient) để tránh vòng lặp interceptor
-                // Hoặc tạo một instance riêng chỉ cho auth
                 const res = await axios.post(
-                    `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003'}/auth/refresh`,
+                    `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003/api'}/auth/refresh`,
                     {},
                     { withCredentials: true } // Gửi cookie refresh token
                 );
@@ -96,8 +94,8 @@ axiosClient.interceptors.response.use(
 
                 if (typeof window !== 'undefined') {
                     localStorage.removeItem('accessToken');
-                    localStorage.removeItem('userId');
-                    window.location.href = '/login'; // Redirect cứng
+                    // localStorage.removeItem('userId');
+                    window.location.href = '/login';
                 }
                 return Promise.reject(refreshError);
             } finally {

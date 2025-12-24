@@ -1,126 +1,113 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useEffect, useState } from "react";
 import { authService } from "@/data/services/auth.service";
 import { useRouter } from "next/navigation";
 import { userService } from "@/data/services/user.service";
-import { jwtDecode } from "jwt-decode";
 import { User } from "@/data/interfaces/users";
+import { Permission } from "@/data/interfaces/permission";
 
-interface AuthContextType {
+export interface AuthContextType {
     user: User | null;
-    accessToken: string;
-    userId: string;
-    login: (token: string, userData: any) => void;
-    logout: () => void;
+    permissions: string[];
+    accessToken: string | null;
     isLoading: boolean;
+    login: (token: string) => Promise<void>;
+    logout: () => Promise<void>;
+    hasPermission: (permission: string) => boolean;
 }
 
-const AuthContext = createContext<AuthContextType | null>(null);
-
-const getUserIdFromToken = (token: string): string => {
-    try {
-        const decoded: any = jwtDecode(token);
-        return decoded.sub || decoded.userId || decoded._id || decoded.id || '';
-    } catch {
-        return "";
-    }
-}
+export const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
-    const [accessToken, setAccessTokenState] = useState<string>("");
-    const [userId, setUserId] = useState<string>("");
+    const [permissions, setPermissions] = useState<string[]>([]);
+    const [accessToken, setAccessToken] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const router = useRouter();
 
-    const setAuthData = useCallback((token: string, userData: User | null) => {
-        const id = token ? getUserIdFromToken(token) : "";
-        setAccessTokenState(token);
-        setUser(userData);
-        setUserId(id);
-
-        if (typeof window !== 'undefined') {
-            if (token) {
-                localStorage.setItem('accessToken', token);
-            } else {
-                localStorage.removeItem('accessToken');
-            }
+    const setAuthData = useCallback(async (token: string | null) => {
+        if (!token) {
+            setUser(null);
+            setPermissions([]);
+            setAccessToken(null);
+            localStorage.removeItem("accessToken");
+            return;
         }
+
+        setAccessToken(token);
+        localStorage.setItem("accessToken", token);
+
+        const userRes = await userService.getUserProfile();
+        setUser(userRes.data);
+        setPermissions(userRes.data?.permissions || []);
+
     }, []);
 
     useEffect(() => {
         const initAuth = async () => {
-            const storedToken = localStorage.getItem('accessToken');
-            if (storedToken) {
-                setAccessTokenState(storedToken);
-                setUserId(getUserIdFromToken(storedToken));
-                try {
-                    const res = await userService.getUserProfile();
-                    setUser(res.data);
-                } catch (error) {
-                    console.error("Failed to fetch user profile", error);
-                    setAuthData("", null);
+            try {
+                const storedToken = localStorage.getItem("accessToken");
+                if (storedToken) {
+                    await setAuthData(storedToken);
                 }
+            } catch (error) {
+                console.error("Init auth failed", error);
+                await setAuthData(null);
+            } finally {
+                setIsLoading(false);
             }
-            setIsLoading(false);
         };
+
         initAuth();
     }, [setAuthData]);
 
-    useEffect(() => {
-        const handleTokenRefresh = async () => {
-            const newToken = localStorage.getItem('accessToken');
-            if (newToken) {
-                try {
-                    const res = await userService.getUserProfile();
-                    setAuthData(newToken, res.data);
-                } catch {
-                    setAuthData("", null);
-                }
-            } else {
-                setAuthData("", null);
-            }
-        };
 
-        window.addEventListener('authTokenRefreshed', handleTokenRefresh);
-        return () => window.removeEventListener('authTokenRefreshed', handleTokenRefresh);
-    }, [setAuthData]);
 
-    const login = (token: string, userData: User) => {
-        setAuthData(token, userData);
+    const login = async (token: string) => {
+        await setAuthData(token);
+        localStorage.setItem("accessToken", token);
         router.push("/todo");
     };
 
     const logout = async () => {
-        const currentId = userId;
-        setAuthData("", null);
-
         try {
-            if (currentId) await authService.logout();
-            window.dispatchEvent(new Event('authTokenRefreshed'));
-            // Chỉ cần 1 trong 2 dòng dưới đây, không nên dùng cả hai!
-            // window.location.href = "/login"; // Đảm bảo redirect và reload sạch sẽ
-            router.push("/login");
-            // và bỏ window.location.reload();
-            localStorage.removeItem('accessToken');
-            console.log("Logout successful");
+            await authService.logout();
+            await setAuthData(null);
+            localStorage.removeItem("accessToken");
         } catch (error) {
-            console.error("Logout error:", error);
+            console.error("Logout error", error);
+        } finally {
+            await setAuthData(null);
+            router.push("/login");
+            localStorage.removeItem("accessToken");
         }
     };
 
+    const hasPermission = useCallback(
+        (permission: string) => {
+            return (
+                permissions.includes("*:*") ||
+                permissions.includes(permission)
+            );
+        },
+        [permissions]
+    );
+
     return (
-        <AuthContext.Provider value={{ user, accessToken, userId, login, logout, isLoading }}>
+        <AuthContext.Provider
+            value={{
+                user,
+                permissions,
+                accessToken,
+                isLoading,
+                login,
+                logout,
+                hasPermission,
+            }}
+        >
             {children}
         </AuthContext.Provider>
     );
 };
 
-export const useAuth = () => {
-    const context = useContext(AuthContext);
-    if (!context) {
-        throw new Error("useAuth must be used within an AuthProvider");
-    }
-    return context;
-};
