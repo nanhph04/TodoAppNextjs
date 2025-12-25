@@ -24,7 +24,7 @@ export default function TodoStatus() {
                 const data = res;
                 console.log("Todo status data:", data);
                 setTodoCount(data?.todo || 0);
-                setInProgressCount(data?.inprogress || 0);
+                setInProgressCount(data?.inProgress || 0);
                 setDoneCount(data?.done || 0);
                 setTotalCount(data?.total || 0);
             } catch (err: any) {

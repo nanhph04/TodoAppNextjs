@@ -1,23 +1,16 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useTodos } from "@/logic/hooks/useTodos";
 import type { Todo } from "@/data/interfaces/todos";
+import DetailTodo, { TodoFormState, TodoStatus } from "@/ui/features/todo/DetailTodo/DetailTodo";
 
-type Status = "TODO" | "IN_PROGRESS" | "DONE";
-
-type EditForm = {
-    description: string;
-    status: Status;
-};
-
-export default function TodoDetail() {
+export default function TodoDetailPage() {
     const { id } = useParams<{ id: string }>();
     const { findById, update, loading, error } = useTodos(1);
 
     const [todo, setTodo] = useState<Todo | null>(null);
-    const [form, setForm] = useState<EditForm>({
+    const [form, setForm] = useState<TodoFormState>({
         description: "",
         status: "TODO",
     });
@@ -38,26 +31,72 @@ export default function TodoDetail() {
             setTodo(data);
             setForm({
                 description: data.description || "",
-                status: data.status as Status,
+                status: (data.status as TodoStatus) || "TODO",
             });
         });
     }, [id, findById]);
 
-    const handleUpdate = async (payload: Partial<EditForm>) => {
+    // Xác nhận (IN_PROGRESS)
+    const handleAccept = async () => {
         if (!todo?._id) return;
-
         try {
             setSaving(true);
-            const updated = await update(todo._id, payload);
+            const updated = await update(todo._id, { ...form, status: "IN_PROGRESS" });
             if (updated) {
                 setTodo(updated);
                 setForm({
                     description: updated.description || "",
-                    status: updated.status as Status,
+                    status: updated.status as TodoStatus,
                 });
-                setMessage("Lưu thành công");
+                setMessage("Đã xác nhận công việc");
             } else {
-                setMessage("Có lỗi xảy ra");
+                setMessage("Có lỗi xảy ra khi xác nhận");
+            }
+        } catch {
+            setMessage("Có lỗi xảy ra");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    // Từ chối (REJECTED, có lý do)
+    const handleReject = async (reason: string) => {
+        if (!todo?._id) return;
+        try {
+            setSaving(true);
+            const updated = await update(todo._id, { ...form, status: "REJECTED", rejectReason: reason });
+            if (updated) {
+                setTodo(updated);
+                setForm({
+                    description: updated.description || "",
+                    status: updated.status as TodoStatus,
+                });
+                setMessage("Đã từ chối công việc");
+            } else {
+                setMessage("Có lỗi xảy ra khi từ chối");
+            }
+        } catch {
+            setMessage("Có lỗi xảy ra");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    // Hoàn thành (DONE)
+    const handleDone = async () => {
+        if (!todo?._id) return;
+        try {
+            setSaving(true);
+            const updated = await update(todo._id, { ...form, status: "DONE" });
+            if (updated) {
+                setTodo(updated);
+                setForm({
+                    description: updated.description || "",
+                    status: updated.status as TodoStatus,
+                });
+                setMessage("Đã hoàn thành công việc");
+            } else {
+                setMessage("Có lỗi xảy ra khi hoàn thành");
             }
         } catch {
             setMessage("Có lỗi xảy ra");
@@ -76,68 +115,26 @@ export default function TodoDetail() {
         return <p className="text-center py-8 text-red-500">{message}</p>;
 
     return (
-        <div className="max-w-xl mx-auto mt-10 bg-white p-8 rounded-lg shadow border">
-            <h1 className="text-2xl font-bold text-blue-700 mb-6">
-                Chi tiết công việc
-            </h1>
-
-            <div className="space-y-4">
-                <p>
-                    <b>Tiêu đề:</b> {todo.title}
-                </p>
-
-                <div>
-                    <b>Mô tả:</b>
-                    <textarea
-                        className="w-full mt-1 border rounded px-3 py-2"
-                        rows={3}
-                        value={form.description}
-                        disabled={saving}
-                        onChange={(e) =>
-                            setForm((f) => ({ ...f, description: e.target.value }))
-                        }
-                    />
-                </div>
-
-                <div>
-                    <b>Trạng thái:</b>
-                    <select
-                        className="ml-2 border rounded px-2 py-1"
-                        value={form.status}
-                        disabled={saving || form.status === "DONE"}
-                        onChange={(e) =>
-                            setForm((f) => ({ ...f, status: e.target.value as Status }))
-                        }
-                    >
-                        <option value="TODO">Chưa thực hiện</option>
-                        <option value="IN_PROGRESS">Đang thực hiện</option>
-                        <option value="DONE">Đã hoàn thành</option>
-                    </select>
-                </div>
-            </div>
-
-            <div className="flex gap-4 mt-8">
-                <button
-                    className="btn-primary"
-                    disabled={saving || form.status === "DONE"}
-                    onClick={() => handleUpdate(form)}
-                >
-                    Lưu
-                </button>
-
-                {form.status !== "DONE" && (
-                    <button
-                        className="btn-success"
-                        disabled={saving}
-                        onClick={() => handleUpdate({ status: "DONE" })}
-                    >
-                        Hoàn thành
-                    </button>
-                )}
-            </div>
+        <div>
+            <DetailTodo
+                todo={todo}
+                form={form}
+                setForm={setForm}
+                saving={saving}
+                onSave={async () => {
+                    if (form.status === "TODO") {
+                        await handleAccept();
+                    } else if (form.status === "REJECTED") {
+                        await handleReject(form.description); // hoặc truyền rejectReason nếu tách riêng
+                    }
+                }}
+                onMarkDone={handleDone}
+            />
 
             {message && (
-                <p className="mt-4 text-center text-sm text-blue-600">{message}</p>
+                <p className={`mt-4 text-center text-base font-semibold ${message.includes("lỗi") ? "text-red-600" : "text-blue-600"}`}>
+                    {message}
+                </p>
             )}
         </div>
     );

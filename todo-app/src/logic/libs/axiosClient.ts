@@ -94,7 +94,6 @@ axiosClient.interceptors.response.use(
 
                 if (typeof window !== 'undefined') {
                     localStorage.removeItem('accessToken');
-                    // localStorage.removeItem('userId');
                     window.location.href = '/login';
                 }
                 return Promise.reject(refreshError);

@@ -79,20 +79,20 @@ export default function RolePage() {
                     { key: "_id", label: "ID" },
                     { key: "name", label: "Name" },
 
-                    {
-                        key: "permissions",
-                        label: "Permissions",
-                        render: (row) =>
-                            row.permissions && row.permissions.length > 0 ? (
-                                <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
-                                    {row.permissions.map((p, i) => (
-                                        <li key={`${row._id}-perm-${(p as any)._id ?? (p as any).slug ?? i}`}>{(p as any).slug ?? (p as any)._id}</li>
-                                    ))}
-                                </ul>
-                            ) : (
-                                "-"
-                            ),
-                    },
+                    // {
+                    //     key: "permissions",
+                    //     label: "Permissions",
+                    //     render: (row) =>
+                    //         row.permissions && row.permissions.length > 0 ? (
+                    //             <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
+                    //                 {row.permissions.map((p, i) => (
+                    //                     <li key={`${row._id}-perm-${(p as any)._id ?? (p as any).slug ?? i}`}>{(p as any).slug ?? (p as any)._id}</li>
+                    //                 ))}
+                    //             </ul>
+                    //         ) : (
+                    //             "-"
+                    //         ),
+                    // },
                     {
                         key: "actions",
                         label: "Actions",

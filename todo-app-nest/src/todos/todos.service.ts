@@ -19,8 +19,20 @@ export class TodosService {
     if (hasAnyPerm) return; // SuperAdmin hoặc Auditor -> OK
 
     if (hasOwnPerm) {
+      // Log chi tiết để debug
+      console.log('[checkOwnership]', {
+        assignee: task.assignee,
+        assigneeStr: task.assignee?.toString?.(),
+        createdBy: task.createdBy,
+        createdByStr: task.createdBy?.toString?.(),
+        userId,
+        userIdStr: userId?.toString?.(),
+        typeAssignee: typeof task.assignee,
+        typeCreatedBy: typeof task.createdBy,
+        typeUserId: typeof userId,
+      });
       // Logic: Chỉ được thao tác nếu mình là assignee hoặc createdBy
-      if (task.assignee.toString() !== userId && task.createdBy.toString() !== userId) {
+      if (task.assignee?.toString?.() !== userId?.toString?.() && task.createdBy?.toString?.() !== userId?.toString?.()) {
         throw new ForbiddenException('Bạn không có quyền thao tác trên task của người khác');
       }
       return;
@@ -32,7 +44,6 @@ export class TodosService {
   async create(createTodoDto: CreateTodoDto, userId: string, userPermissions: string[]): Promise<Todo> {
 
     let assignee = createTodoDto.assignee;
-    // Nếu KHÔNG có quyền tạo cho người khác, ép assignee là chính mình
     const canCreateAny = userPermissions.includes('*:*') || userPermissions.includes('task:create:any');
     if (!canCreateAny) {
       assignee = userId;
@@ -53,9 +64,6 @@ export class TodosService {
   }
 
   async findAllInternal(userId: string, userPermissions: string[], page: number, limit: number) {
-    // console.log('[TodosService][findAllInternal] userId:', userId);
-    // console.log('[TodosService][findAllInternal] userPermissions:', userPermissions);
-    // Nếu có quyền xem tất cả
     if (userPermissions.includes('*:*') || userPermissions.includes('task:read:any')) {
       return this.todosRepository.findAll(page, limit);
     }
@@ -70,22 +78,21 @@ export class TodosService {
   async findOne(id: string, userId: string, userPermissions: string[]): Promise<Todo> {
     const todo = await this.todosRepository.findById(id);
     if (!todo) throw new NotFoundException('Todo not found');
-
-    // CHECK BẢO MẬT: Xem user có được phép xem task này không
+    // CHECK BẢO MẬT
     this.checkOwnership(todo, userId, userPermissions, 'read');
 
     return todo;
   }
 
   async update(id: string, updateTodoDto: UpdateTodoDto, userId: string, userPermissions: string[]): Promise<Todo> {
-    // 1. Phải tìm task trước để biết chủ nhân là ai
+    // 1. TÌM TODO
     const todo = await this.todosRepository.findById(id);
     if (!todo) throw new NotFoundException('Todo not found');
 
-    // 2. CHECK BẢO MẬT: Có phải task của mình không?
+    // 2. CHECK BẢO MẬT
     this.checkOwnership(todo, userId, userPermissions, 'update');
 
-    // 3. Nếu qua được bước trên mới cho update
+    // 3. CHUẨN BỊ DỮ LIỆU CẬP NHẬT
     const updateData: any = { ...updateTodoDto };
     delete updateData['userId']; // Prevent hack
     delete updateData['_id'];
@@ -122,9 +129,10 @@ export class TodosService {
 
     const canReadAll = userPermissions.includes('*:*') || userPermissions.includes('task:read:any');
     if (!canReadAll) {
+      const userObjId = new Types.ObjectId(userId);
       filter.$or = [
-        { assignee: userId },
-        { createdBy: userId }
+        { assignee: userObjId },
+        { createdBy: userObjId }
       ];
     }
 

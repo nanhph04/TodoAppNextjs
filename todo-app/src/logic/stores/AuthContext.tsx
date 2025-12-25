@@ -40,6 +40,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         const userRes = await userService.getUserProfile();
         setUser(userRes.data);
+        console.log(userRes.data.userId);
         setPermissions(userRes.data?.permissions || []);
 
     }, []);

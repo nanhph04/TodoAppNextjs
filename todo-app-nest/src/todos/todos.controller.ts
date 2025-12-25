@@ -20,15 +20,10 @@ export class TodosController {
     return this.todosService.create(createTodoDto, userId, userPermissions);
   }
 
-  // Gộp chung API GET
-  // Acc 1 gọi -> trả về list của họ
-  // Acc 2 gọi -> trả về list tất cả
+ 
   @Get()
-  // Không cần require cứng permission nào ở đây, vì trong service ta check logic if/else
-  // Hoặc có thể require tối thiểu 'task:read:own'
   findAll(@Req() req: any, @Query('page') page = 1, @Query('limit') limit = 10) {
     // console.log('GET /todos req.user:', req.user);
-    // console.log('GET /todos req.userPermissions:', req.userPermissions);
     const { userId, permissions: userPermissions } = requireUserId(req);
     return this.todosService.findAllInternal(
       userId,
@@ -47,7 +42,7 @@ export class TodosController {
   }
 
   @Get(':id')
-  // Guard chỉ chặn vòng ngoài
+  @Permissions('task:read:own', 'task:read:any')
   findOne(@Param('id') id: string, @Req() req: any) {
     console.log('GET /todos/:id req.user:', req.user);
     const { userId, permissions: userPermissions } = requireUserId(req);

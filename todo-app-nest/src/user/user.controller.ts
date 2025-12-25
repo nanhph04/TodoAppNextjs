@@ -14,6 +14,8 @@ export class UserController {
     const userInfo = this.userService.getUserById(userId);
     const permissions = this.userService.getUserPermissions(userId);
     return Promise.all([userInfo, permissions]).then(([info, perms]) => {
+      console.log('User Info:', info);
+      console.log('User Permissions:', perms);
       return {
         ...info,
         permissions: perms

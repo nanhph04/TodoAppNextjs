@@ -22,9 +22,14 @@ export default function TodoItem({ todo, onDelete }: TodoItemProps) {
     const router = useRouter();
     const todoId = todo._id;
     const { user } = useAuth();
-    const isAssignee = user?._id && (todo.assigneeId === user._id);
+    console.log("[DEBUG] assignee:", todo.assignee, "createdBy:", todo.createdBy, "userId:", user?.userId);
+    const isAssignee = user?.userId && (
+        (typeof todo.assignee === "object" ? todo.assignee?._id : todo.assignee) === user.userId
+    );
     console.log("Todo Item - user:", user, "todo:", todo);
-    const isCreator = user?._id && (todo.creatorId === user._id);
+    const isCreator = user?.userId && (
+        (typeof todo.createdBy === "object" ? todo.createdBy?._id : todo.createdBy) === user.userId
+    );
     console.log("Todo Item - isAssignee:", isAssignee, "isCreator:", isCreator);
     const canRespond = !!isAssignee && !isCreator && todo.status === "TODO";
 
@@ -43,6 +48,8 @@ export default function TodoItem({ todo, onDelete }: TodoItemProps) {
 
     const statusLabel = React.useMemo(() => {
         switch (todo.status) {
+            case "REJECTED":
+                return "rejected";
             case "DONE":
                 return "done";
             case "IN_PROGRESS":
@@ -120,8 +127,8 @@ export default function TodoItem({ todo, onDelete }: TodoItemProps) {
         setLoading(true);
         setError(null);
         try {
-            const newDesc = `${todo.description || ""}\n[Rejected: ${rejectReason.trim()}]`;
-            await todoService.updateTodo(String(todoId), { description: newDesc });
+            const trimmedRejectReason = rejectReason.trim();
+            await todoService.updateTodo(String(todoId), { rejectReason: trimmedRejectReason, status: "REJECTED" });
             setShowReject(false);
             setRejectReason("");
             router.refresh();
@@ -134,6 +141,14 @@ export default function TodoItem({ todo, onDelete }: TodoItemProps) {
 
     return (
         <div className={styles["todo-card"]}>
+            <div className={styles["todo-header"]}>
+                <p>Người tạo: <span className={styles["todo-creator"]}>{
+                    typeof todo.createdBy === "object" ? todo.createdBy.fullName : "N/A"
+                }</span></p>
+                <p>Người nhận: <span className={styles["todo-assignee"]}>{
+                    typeof todo.assignee === "object" ? todo.assignee.fullName : "N/A"
+                }</span></p>
+            </div>
             <div className={styles["todo-content"]}>
                 <p className={styles["todo-title"]}>{todo.title}</p>
                 <p className={styles["todo-description"]}>{todo.description}</p>
@@ -142,8 +157,7 @@ export default function TodoItem({ todo, onDelete }: TodoItemProps) {
                 <p>Piority: <span className={priorityClass}>{todo.priority}</span></p>
                 <p>Status: <span className={statusClass}>{statusLabel}</span></p>
                 <p>Created at: <span className={styles["todo-createdAt"]}>{createdAtLabel}</span></p>
-                <p>Người tạo: <span className={styles["todo-creator"]}>{todo.creatorId || "N/A"}</span></p>
-                <p>Người nhận: <span className={styles["todo-assignee"]}>{todo.assigneeId || "N/A"}</span></p>
+
                 {completedAtLabel && (
                     <p>Completed at: <span className={styles["todo-completedAt"]}>{completedAtLabel}</span></p>
                 )}
@@ -169,12 +183,14 @@ export default function TodoItem({ todo, onDelete }: TodoItemProps) {
                             ></Button>
                         </>
                     )}
-                    <Button
-                        className={`${styles["todo-btn"]} ${styles["btn-danger"]}`}
-                        onClick={handleDelete}
-                        disabled={loading}
-                        title="Xóa"
-                    ></Button>
+                    {(todo.status === "DONE" || todo.status === "REJECTED") && (
+                        <Button
+                            className={`${styles["todo-btn"]} ${styles["btn-danger"]}`}
+                            onClick={handleDelete}
+                            disabled={loading}
+                            title="Xóa"
+                        ></Button>
+                    )}
                 </div>
                 {showReject && (
                     <div className={styles["reject-form"]}>
